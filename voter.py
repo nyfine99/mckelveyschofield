@@ -41,7 +41,7 @@ class Voter():
             p2 (Policy): the second policy.
 
         Returns:
-            float: the utility of the policy.
+            float: the policy chosen by the voter, or 0 if indifferent.
         """
         val = self.get_utility(p1) - self.get_utility(p2)
         if val > 0:
