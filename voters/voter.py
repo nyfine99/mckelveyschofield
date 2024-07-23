@@ -1,5 +1,5 @@
-from utility_functions import neg_distance
-from policy import Policy
+from utility_functions.utility_functions import neg_distance
+from policies.policy import Policy
 
 """
 A file which defines the Voter class.
@@ -31,6 +31,9 @@ class Voter():
         return self.utility_function(self.ideal_policy, policy)
     
 
+    # I probably need a version of the function below which works for 
+    # more than two inputs to output the closest policy (and ignores ties), 
+    # and then another version which deals with ties, either randomly or systematically
     def preferred_policy(self, p1: Policy, p2: Policy) -> int:
         """
         Returns 1 if the preferred policy is the first, 2 if the preferred policy is the second, 
