@@ -73,9 +73,8 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     def plot_election_2d(self, original_policy: Policy, new_policy: Policy):
         votes = self.obtain_votes(original_policy, new_policy)
         plt.figure(figsize=(8, 6))
-        # should probably make the winner have a star at some point or something
-        plt.scatter([original_policy.values[0]],[original_policy.values[1]], color='blue', marker='x')
-        plt.scatter([new_policy.values[0]],[new_policy.values[1]], color='red', marker='x')
+        
+        # plotting all voters
         for i in range(len(self.voters)):
             voter = self.voters[i]
             color = 'yellow'
@@ -84,9 +83,34 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             elif votes[i] == 1:
                 color = 'red'
             plt.scatter([voter.ideal_policy.values[0]], [voter.ideal_policy.values[1]], color=color, marker='o')
+        
+        # plotting policies and differentiating winner from loser
+        winner = self.compare_policies(original_policy,new_policy)
+        blue_marker = '*' if winner == 0 else 'X'
+        blue_size = 250 if winner == 0 else 150
+        red_marker = '*' if winner == 1 else 'X'
+        red_size = 250 if winner == 1 else 150
+        plt.scatter(
+            [original_policy.values[0]],
+            [original_policy.values[1]], 
+            color='blue', 
+            marker=blue_marker, 
+            edgecolors='black',
+            s=blue_size
+        )
+        plt.scatter(
+            [new_policy.values[0]],
+            [new_policy.values[1]], 
+            color='red', 
+            marker=red_marker, 
+            edgecolors='black', 
+            s=red_size
+        )
+
+        # title and display
         plt.title('Voters\' Distribution')
-        # plt.xlabel(issues[0])
-        # plt.ylabel(issues[1])
+        plt.xlabel('Issue 1 Position')
+        plt.ylabel('Issue 2 Position')
         plt.grid(True)
         plt.show()
 
@@ -98,3 +122,4 @@ class ElectionDyanamicsMultiParty(ElectionDynamics):
 
     def compare_policies(self, policies: list[Policy]):
         return self.evaluation_function(self.voters, policies)
+    

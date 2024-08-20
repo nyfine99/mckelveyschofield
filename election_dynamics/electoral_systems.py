@@ -13,8 +13,9 @@ def status_quo_preference(counts: list[int]):
 
 def create_two_party_status_quo_preference(voters: list[Voter]):
     """
-    Creates an ElectionDynamicsTwoParty where the evaluation function gives ties on both individual and
-    overall preferences to the original policy.
+    Creates an ElectionDynamicsTwoParty where the evaluation function gives ties on
+    overall preferences to the original policy. 
+    If an individual's preferences are tied, that individual does not vote.
     """
     return ElectionDynamicsTwoParty(voters, status_quo_preference)
 
