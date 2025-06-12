@@ -5,7 +5,7 @@ A file which defines the Policy class. Once a policy is created, its values are 
 """
 
 class Policy():
-    def __init__(self, values: list[Union[float,int]]):
+    def __init__(self, values: list[Union[float,int]], name: str = None):
         """
         Initializes a policy object.
 
@@ -13,6 +13,7 @@ class Policy():
             values (list[float|int]): the values of the policy along each issue/axis.
         """
         self._values = [float(value) for value in values]
+        self.name = name
 
     @property
     def values(self):

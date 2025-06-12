@@ -124,15 +124,17 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         plt.ylabel(f'Position on {self.issue_2}')
 
         if verbose:
-            winner_text = "original policy" if winner == 0 else "new policy"
+            original_policy_name = "original" if original_policy.name is None else original_policy.name
+            new_policy_name = "new" if original_policy.name is None else new_policy.name
+            winner_text = original_policy_name if winner == 0 else new_policy_name
             vote_totals = self.tabulate_votes(original_policy, new_policy)
             original_policy_votes = vote_totals[0]
             new_policy_votes = vote_totals[1]
             fig.text(0, 0.05, f"""
                         Description:
-                        The original policy (blue) received {original_policy_votes} votes.
-                        The new policy (red) received {new_policy_votes} votes.
-                        The {winner_text} wins!""",
+                        The {original_policy_name} policy (blue) received {original_policy_votes} votes.
+                        The {new_policy_name} policy (red) received {new_policy_votes} votes.
+                        So, the {winner_text} policy wins!""",
                         fontsize=10, color='gray')
 
         plt.grid(True)
