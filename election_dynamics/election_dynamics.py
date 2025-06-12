@@ -74,7 +74,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     
     def plot_election_2d(self, original_policy: Policy, new_policy: Policy, verbose: bool = True):
         votes = self.obtain_individual_votes(original_policy, new_policy)
-        fig = plt.figure(figsize=(8, 6))
+        fig = plt.figure(figsize=(6, 4))
         ax = fig.add_axes([0.2, 0.3, 0.6, 0.6])  # Shrink plot inside the figure
         
         # plotting all voters
@@ -131,11 +131,10 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             original_policy_votes = vote_totals[0]
             new_policy_votes = vote_totals[1]
             fig.text(0, 0.05, f"""
-                        Description:
                         The {original_policy_name} policy (blue) received {original_policy_votes} votes.
                         The {new_policy_name} policy (red) received {new_policy_votes} votes.
                         So, the {winner_text} policy wins!""",
-                        fontsize=10, color='gray')
+                        fontsize=9, color='black')
 
         plt.grid(True)
         plt.show()
