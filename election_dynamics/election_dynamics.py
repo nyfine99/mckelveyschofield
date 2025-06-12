@@ -33,10 +33,19 @@ class ElectionDynamics(ABC):
 
 
 class ElectionDynamicsTwoParty(ElectionDynamics):
-    def __init__(self, voters: list[Voter], evaluation_function: callable, tiebreak_func: callable = None):
+    def __init__(
+        self, 
+        voters: list[Voter], 
+        evaluation_function: callable, 
+        tiebreak_func: callable = None,
+        issue_1: str = "Issue 1",
+        issue_2: str = "Issue 2",
+    ):
         self.voters = voters
         self.evaluation_function = evaluation_function
-        self.tiebreak_func = tiebreak_func # used when a voter is ambivalent to distribute their vote
+        self.tiebreak_func = tiebreak_func  # used when a voter is ambivalent to distribute their vote
+        self.issue_1 = issue_1  # Issue 1 name
+        self.issue_2 = issue_2  # Issue 2 name
 
     def compare_policies(self, original_policy: Policy, new_policy: Policy):
         return self.evaluation_function(self.tabulate_votes(original_policy, new_policy))
@@ -65,7 +74,8 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     
     def plot_election_2d(self, original_policy: Policy, new_policy: Policy, verbose: bool = True):
         votes = self.obtain_individual_votes(original_policy, new_policy)
-        plt.figure(figsize=(10, 8))
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_axes([0.2, 0.3, 0.6, 0.6])  # Shrink plot inside the figure
         
         # plotting all voters
         colors = []
@@ -78,7 +88,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             else:
                 colors.append('yellow')
         
-        plt.scatter(
+        ax.scatter(
             [voter.ideal_policy.values[0] for voter in self.voters], 
             [voter.ideal_policy.values[1] for voter in self.voters], 
             color=colors, 
@@ -91,11 +101,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         blue_size = 250 if winner == 0 else 150
         red_marker = '*' if winner == 1 else 'X'
         red_size = 250 if winner == 1 else 150
-        winner_text = "original policy" if winner == 0 else "new policy"
-        vote_totals = self.tabulate_votes(original_policy, new_policy)
-        original_policy_votes = vote_totals[0]
-        new_policy_votes = vote_totals[1]
-        plt.scatter(
+        ax.scatter(
             [original_policy.values[0]],
             [original_policy.values[1]], 
             color='blue', 
@@ -103,7 +109,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             edgecolors='black',
             s=blue_size
         )
-        plt.scatter(
+        ax.scatter(
             [new_policy.values[0]],
             [new_policy.values[1]], 
             color='red', 
@@ -114,8 +120,21 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
 
         # title and display
         plt.title('Voters\' Distribution')
-        plt.xlabel('Issue 1 Position')
-        plt.ylabel('Issue 2 Position')
+        plt.xlabel(f'Position on {self.issue_1}')
+        plt.ylabel(f'Position on {self.issue_2}')
+
+        if verbose:
+            winner_text = "original policy" if winner == 0 else "new policy"
+            vote_totals = self.tabulate_votes(original_policy, new_policy)
+            original_policy_votes = vote_totals[0]
+            new_policy_votes = vote_totals[1]
+            fig.text(0, 0.05, f"""
+                        Description:
+                        The original policy (blue) received {original_policy_votes} votes.
+                        The new policy (red) received {new_policy_votes} votes.
+                        The {winner_text} wins!""",
+                        fontsize=10, color='gray')
+
         plt.grid(True)
         plt.show()
 
