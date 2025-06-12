@@ -38,24 +38,17 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         self.evaluation_function = evaluation_function
         self.tiebreak_func = tiebreak_func # used when a voter is ambivalent to distribute their vote
 
-    def tabulate_votes(self, original_policy: Policy, new_policy: Policy):
-        counts = [0,0] # index 0 represents the original_policy count, index 1 the new policy
-        for voter in self.voters:
-            original_utility = voter.get_utility(original_policy)
-            new_utility = voter.get_utility(new_policy)
-            if original_utility > new_utility:
-                counts[0] += 1
-            elif original_utility == new_utility and self.tiebreak_func is not None:
-                # if == and no tiebreak_func, the voter doesn't vote
-                self.tiebreak_func()
-            elif original_utility < new_utility:
-                counts[1] += 1
-        return counts
-
     def compare_policies(self, original_policy: Policy, new_policy: Policy):
         return self.evaluation_function(self.tabulate_votes(original_policy, new_policy))
     
-    def obtain_votes(self, original_policy: Policy, new_policy: Policy):
+    def tabulate_votes(self, original_policy: Policy, new_policy: Policy):
+        counts = [0,0] # index 0 represents the original_policy count, index 1 the new policy
+        votes = self.obtain_individual_votes(original_policy, new_policy)
+        counts[0] = sum([1 for vote in votes if vote == 0])
+        counts[1] = sum([1 for vote in votes if vote == 1])
+        return counts
+    
+    def obtain_individual_votes(self, original_policy: Policy, new_policy: Policy):
         votes = len(self.voters)*[-1] # index 0 represents the original_policy count, index 1 the new policy
         for i in range(0,len(self.voters)):
             voter = self.voters[i]
@@ -64,25 +57,33 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             if original_utility > new_utility:
                 votes[i] = 0
             elif original_utility == new_utility and self.tiebreak_func is not None:
-                # if == and no tiebreak_func, the voter doesn't vote
-                self.tiebreak_func()
+                votes[i] = self.tiebreak_func()
             elif original_utility < new_utility:
                 votes[i] = 1
+            # otherwise, the voter doesn't vote
         return votes
     
-    def plot_election_2d(self, original_policy: Policy, new_policy: Policy):
-        votes = self.obtain_votes(original_policy, new_policy)
-        plt.figure(figsize=(8, 6))
+    def plot_election_2d(self, original_policy: Policy, new_policy: Policy, verbose: bool = True):
+        votes = self.obtain_individual_votes(original_policy, new_policy)
+        plt.figure(figsize=(10, 8))
         
         # plotting all voters
+        colors = []
         for i in range(len(self.voters)):
             voter = self.voters[i]
-            color = 'yellow'
             if votes[i] == 0:
-                color = 'blue'
+                colors.append('blue')
             elif votes[i] == 1:
-                color = 'red'
-            plt.scatter([voter.ideal_policy.values[0]], [voter.ideal_policy.values[1]], color=color, marker='o')
+                colors.append('red')
+            else:
+                colors.append('yellow')
+        
+        plt.scatter(
+            [voter.ideal_policy.values[0] for voter in self.voters], 
+            [voter.ideal_policy.values[1] for voter in self.voters], 
+            color=colors, 
+            marker='o'
+        )
         
         # plotting policies and differentiating winner from loser
         winner = self.compare_policies(original_policy,new_policy)
@@ -90,6 +91,10 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         blue_size = 250 if winner == 0 else 150
         red_marker = '*' if winner == 1 else 'X'
         red_size = 250 if winner == 1 else 150
+        winner_text = "original policy" if winner == 0 else "new policy"
+        vote_totals = self.tabulate_votes(original_policy, new_policy)
+        original_policy_votes = vote_totals[0]
+        new_policy_votes = vote_totals[1]
         plt.scatter(
             [original_policy.values[0]],
             [original_policy.values[1]], 
