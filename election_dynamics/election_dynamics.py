@@ -2,6 +2,7 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from datetime import datetime
 import math
+from ordered_set import OrderedSet
 
 from abc import ABC, abstractmethod
 
@@ -80,7 +81,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     def plot_election_2d(self, original_policy: Policy, new_policy: Policy, verbose: bool = True):
         votes = self.obtain_individual_votes(original_policy, new_policy)
         fig = plt.figure(figsize=(6, 4))
-        ax = fig.add_axes([0.2, 0.3, 0.6, 0.6])  # Shrink plot inside the figure
+        ax = fig.add_axes([0.2, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
         
         # plotting all voters
         colors = []
@@ -223,7 +224,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 print(f"Starting to create frame {f_num}")
 
             plt.clf()  # Clear the current axes/figure
-            fig.add_axes([0.1, 0.3, 0.6, 0.6])
+            fig.add_axes([0.1, 0.3, 0.5, 0.5])
             current_policy = policy_after_step[f_num]
             new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_avg_dist(current_policy))
 
@@ -234,6 +235,18 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             current_policy_name = f"Policy {f_num}"
             new_policy_name = f"Policy {f_num+1}"
             undecided_name = "Undecided"
+
+            original_policy_opacity = 0.5
+            goal_policy_opacity = 0.5
+
+            if f_num == 0:
+                current_color = original_policy_color
+                current_policy_name = original_policy_name
+                original_policy_opacity = 1.0
+            if new_policy == goal_policy:
+                new_color = goal_policy_color
+                new_policy_name = goal_policy_name
+                goal_policy_opacity = 1.0
 
             # plotting all voters
             votes = self.obtain_individual_votes(current_policy, new_policy)
@@ -262,40 +275,44 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             original_policy_plot = plt.scatter(
                 [original_policy.values[0]],
                 [original_policy.values[1]], 
-                color=original_policy_color, 
+                color=original_policy_color,
                 # edgecolors='black',
                 marker='x',
                 s=200,
+                alpha=original_policy_opacity,
             )
             original_policy_plot.set_label(original_policy_name)
 
             goal_policy_plot = plt.scatter(
                 [goal_policy.values[0]],
                 [goal_policy.values[1]], 
-                color=goal_policy_color, 
+                color=goal_policy_color,
                 edgecolors='black',
                 marker='*',
                 s=200,
+                alpha=goal_policy_opacity,
             )
             goal_policy_plot.set_label(goal_policy_name)
 
-            current_policy_plot = plt.scatter(
-                [current_policy.values[0]],
-                [current_policy.values[1]],
-                color=current_color, 
-                edgecolors='black',
-                s=200,
-            )
-            current_policy_plot.set_label(current_policy_name)
+            if f_num != 0:
+                current_policy_plot = plt.scatter(
+                    [current_policy.values[0]],
+                    [current_policy.values[1]],
+                    color=current_color, 
+                    edgecolors='black',
+                    s=200,
+                )
+                current_policy_plot.set_label(current_policy_name)
 
-            new_policy_plot = plt.scatter(
-                [new_policy.values[0]],
-                [new_policy.values[1]], 
-                color=new_color, 
-                edgecolors='black',
-                s=200,
-            )
-            new_policy_plot.set_label(new_policy_name)
+            if new_policy != goal_policy:
+                new_policy_plot = plt.scatter(
+                    [new_policy.values[0]],
+                    [new_policy.values[1]], 
+                    color=new_color, 
+                    edgecolors='black',
+                    s=200,
+                )
+                new_policy_plot.set_label(new_policy_name)
 
             policy_after_step[f_num+1] = new_policy
 
@@ -304,15 +321,16 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 original_policy_name,
                 goal_policy_name,
                 current_policy_name,
-                f'{current_policy_name} Voters',  
                 new_policy_name,
+                f'{current_policy_name} Voters',  
                 f'{new_policy_name} Voters',  
                 f'{undecided_name} Voters',  
             ]
+            desired_order = OrderedSet(desired_order)  # removing duplicates on first and last frames
             handles, labels = plt.gca().get_legend_handles_labels()
             label_to_handle = dict(zip(labels, handles))
             ordered_handles = [label_to_handle[label] for label in desired_order]
-            plt.title(f'Voters\' Preferences, Step {f_num+1}')
+            plt.title(f'Path from {original_policy_name} to {goal_policy_name},\n Step {f_num+1}')
             plt.xlabel(f'Position on {self.issue_1}')
             plt.ylabel(f'Position on {self.issue_2}')
             plt.legend(
@@ -330,7 +348,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                     0, 
                     0.05, 
                     f"""
-                    The agenda setter pits {current_policy_name}, the current policy, against {new_policy_name}.
+                    The agenda setter pits {current_policy_name} (the current policy) against {new_policy_name}.
                     {current_policy_name} receives {current_policy_votes} votes.
                     {new_policy_name} receives {new_policy_votes} votes.
                     So, {new_policy_name} defeats {current_policy_name}, and {new_policy_name} is adopted.
