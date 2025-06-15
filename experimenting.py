@@ -238,8 +238,8 @@ for k in range(1,n_steps):
     number_of_points = 360
     angles = [math.pi * 2.0 * n/(float(number_of_points)) for n in range(number_of_points)]
     for angle in angles:
-        inner_bounds.append(p1.values)
-        outer_bounds.append([p1.values[0] + max_r * math.sin(angle), p1.values[1] + max_r * math.cos(angle)])
+        inner_bounds.append(current_policy.values)
+        outer_bounds.append([current_policy.values[0] + max_r * math.sin(angle), current_policy.values[1] + max_r * math.cos(angle)])
 
     num_halving_iterations = 12
     for i in range(len(inner_bounds)):
