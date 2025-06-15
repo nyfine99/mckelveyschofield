@@ -1,7 +1,12 @@
+import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+from datetime import datetime
+import math
 
 from abc import ABC, abstractmethod
 
+from utility_functions.evaluation_functions import status_quo_preference
+from voters.simple_voter import SimpleVoter
 from voters.voter import Voter
 from policies.policy import Policy
 
@@ -139,6 +144,196 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         plt.grid(True)
         plt.show()
 
+
+class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
+    def __init__(
+        self, 
+        voters: list[SimpleVoter],
+        issue_1: str = "Issue 1",
+        issue_2: str = "Issue 2",
+    ):
+        self.voters = voters
+        self.evaluation_function = status_quo_preference
+        self.tiebreak_func = None  # used when a voter is ambivalent to distribute their vote
+        self.issue_1 = issue_1  # Issue 1 name
+        self.issue_2 = issue_2  # Issue 2 name
+
+    def mckelvey_schofield_greedy_avg_dist(
+        self,
+        current_policy
+    ) -> Policy:
+        """
+        Select the next policy using a greedy algorithm - choose the policy with the highest average distance
+        from all voters which beats the current policy.
+        """
+        max_dist = max([math.dist(current_policy.values, voter.ideal_policy.values) for voter in self.voters])
+        max_r = 2.0 * max_dist
+        inner_bounds = []
+        outer_bounds = []
+        number_of_points = 360
+        angles = [math.pi * 2.0 * n/(float(number_of_points)) for n in range(number_of_points)]
+        for angle in angles:
+            inner_bounds.append(current_policy.values)
+            outer_bounds.append([current_policy.values[0] + max_r * math.sin(angle), current_policy.values[1] + max_r * math.cos(angle)])
+
+        num_halving_iterations = 12
+        for i in range(len(inner_bounds)):
+            for j in range(num_halving_iterations):
+                curr_mid_policy_values = [
+                    (inner_bounds[i][0] + outer_bounds[i][0])/2, (inner_bounds[i][1] + outer_bounds[i][1])/2
+                ]
+                curr_mid_policy = Policy(curr_mid_policy_values)
+                if self.compare_policies(current_policy, curr_mid_policy):
+                    # curr_mid policy won
+                    inner_bounds[i] = curr_mid_policy_values
+                else:
+                    outer_bounds[i] = curr_mid_policy_values
+
+        max_avg_dist = -1
+        max_ind = -1
+        for i in range(len(inner_bounds)):
+            curr_avg_dist = sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in self.voters])/len(self.voters)
+            if curr_avg_dist > max_avg_dist:
+                max_avg_dist = curr_avg_dist
+                max_ind = i
+
+        return inner_bounds[max_ind]
+        
+    
+    def animate_mckelvey_schofield(
+        self, 
+        original_policy, 
+        goal_policy, 
+        max_steps=100, 
+        output_folder="output",
+        filename=f"output"
+    ):
+        policy_after_step = {0: original_policy}
+        fig = plt.figure()
+
+        original_policy_color = "blue"
+        goal_policy_color = "red"
+
+        def make_frame(f_num):
+            # print(f"Starting to create frame {f_num}")
+
+            plt.clf()  # Clear the current axes/figure
+            fig.add_axes([0.1, 0.3, 0.6, 0.6])
+            current_policy = policy_after_step[f_num]
+            new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_avg_dist(current_policy))
+
+            # initial plot settings
+            current_color = "green" if f_num % 2 == 0 else "orange"
+            new_color = "orange" if f_num % 2 == 0 else "green"
+            undecided_color = "yellow"
+            current_policy_name = f"Policy {f_num}"
+            new_policy_name = f"Policy {f_num+1}"
+            undecided_name = "Undecided"
+
+            # plotting all voters
+            votes = self.obtain_individual_votes(current_policy, new_policy)
+            voters_by_vote = {"current": [], "new": [], "undecided": []}
+            policy_colors = {"current": current_color, "new": new_color, "undecided": undecided_color}
+            policy_names = {"current": current_policy_name, "new": new_policy_name, "undecided": undecided_name}
+            for i in range(len(self.voters)):
+                if votes[i] == 0:
+                    voters_by_vote["current"].append(self.voters[i])
+                elif votes[i] == 1:
+                    voters_by_vote["new"].append(self.voters[i])
+                else:
+                    voters_by_vote["undecided"].append(self.voters[i])
+            
+            for k in voters_by_vote.keys():
+                voters_plot = plt.scatter(
+                    [voter.ideal_policy.values[0] for voter in voters_by_vote[k]], 
+                    [voter.ideal_policy.values[1] for voter in voters_by_vote[k]], 
+                    c=policy_colors[k], 
+                    marker='o'
+                )
+                curr_name = policy_names[k]
+                voters_plot.set_label(f"{curr_name} Voters")
+
+            # plotting policies
+            original_policy_plot = plt.scatter(
+                [original_policy.values[0]],
+                [original_policy.values[1]], 
+                color=original_policy_color, 
+                # edgecolors='black',
+                marker='x',
+                s=200,
+            )
+            original_policy_plot.set_label('Original Policy')
+
+            goal_policy_plot = plt.scatter(
+                [goal_policy.values[0]],
+                [goal_policy.values[1]], 
+                color=goal_policy_color, 
+                edgecolors='black',
+                marker='*',
+                s=200,
+            )
+            goal_policy_plot.set_label('Goal Policy')
+
+            current_policy_plot = plt.scatter(
+                [current_policy.values[0]],
+                [current_policy.values[1]],
+                color=current_color, 
+                edgecolors='black',
+                s=200,
+            )
+            current_policy_plot.set_label(current_policy_name)
+
+            new_policy_plot = plt.scatter(
+                [new_policy.values[0]],
+                [new_policy.values[1]], 
+                color=new_color, 
+                edgecolors='black',
+                s=200,
+            )
+            new_policy_plot.set_label(new_policy_name)
+
+            policy_after_step[f_num+1] = new_policy
+
+            # title, labels, legend
+            desired_order = [
+                'Original Policy',
+                'Goal Policy',
+                current_policy_name,
+                f'{current_policy_name} Voters',  
+                new_policy_name,
+                f'{new_policy_name} Voters',  
+                f'{undecided_name} Voters',  
+            ]
+            handles, labels = plt.gca().get_legend_handles_labels()
+            label_to_handle = dict(zip(labels, handles))
+            ordered_handles = [label_to_handle[label] for label in desired_order]
+            plt.title(f'Voters\' Preferences, Step {f_num+1}')
+            plt.xlabel(f'Position on {self.issue_1}')
+            plt.ylabel(f'Position on {self.issue_2}')
+            plt.legend(
+                loc='upper left', 
+                bbox_to_anchor=(1.05, 1), 
+                borderaxespad=0., 
+                handles=ordered_handles, 
+                labels=desired_order
+            )
+            # print(f"Frame {f_num} created")
+
+        def frame_gen():
+            f_num = 0
+            while True:
+                # TODO: check if off by one at all in max_steps condition
+                if policy_after_step[f_num] == goal_policy or f_num >= max_steps:
+                    break
+                yield f_num
+                f_num += 1
+
+        def init():
+            return None
+
+        ani = animation.FuncAnimation(fig, make_frame, frames=frame_gen(), init_func=init)
+        # Save to mp4
+        ani.save(f"{output_folder}/{filename}.mp4", writer='ffmpeg', fps=0.5)
 
 class ElectionDyanamicsMultiParty(ElectionDynamics):
     def __init__(self, voters: list[Voter], evaluation_function: callable):
