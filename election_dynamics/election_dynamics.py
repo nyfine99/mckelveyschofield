@@ -206,16 +206,21 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         goal_policy, 
         max_steps=100, 
         output_folder="output",
-        filename=f"output"
+        filename=f"output",
+        verbose=True,
+        fps=0.5,
     ):
         policy_after_step = {0: original_policy}
         fig = plt.figure()
 
         original_policy_color = "blue"
+        original_policy_name = original_policy.name if original_policy.name is not None else "Original Policy"
         goal_policy_color = "red"
+        goal_policy_name = goal_policy.name if goal_policy.name is not None else "Goal Policy"
 
         def make_frame(f_num):
-            # print(f"Starting to create frame {f_num}")
+            if verbose:
+                print(f"Starting to create frame {f_num}")
 
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.6, 0.6])
@@ -262,7 +267,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 marker='x',
                 s=200,
             )
-            original_policy_plot.set_label('Original Policy')
+            original_policy_plot.set_label(original_policy_name)
 
             goal_policy_plot = plt.scatter(
                 [goal_policy.values[0]],
@@ -272,7 +277,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 marker='*',
                 s=200,
             )
-            goal_policy_plot.set_label('Goal Policy')
+            goal_policy_plot.set_label(goal_policy_name)
 
             current_policy_plot = plt.scatter(
                 [current_policy.values[0]],
@@ -296,8 +301,8 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
 
             # title, labels, legend
             desired_order = [
-                'Original Policy',
-                'Goal Policy',
+                original_policy_name,
+                goal_policy_name,
                 current_policy_name,
                 f'{current_policy_name} Voters',  
                 new_policy_name,
@@ -317,13 +322,30 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 handles=ordered_handles, 
                 labels=desired_order
             )
-            # print(f"Frame {f_num} created")
+            if verbose:
+                vote_totals = self.tabulate_votes(current_policy, new_policy)
+                current_policy_votes = vote_totals[0]
+                new_policy_votes = vote_totals[1]
+                fig.text(
+                    0, 
+                    0.05, 
+                    f"""
+                    The agenda setter pits {current_policy_name}, the current policy, against {new_policy_name}.
+                    {current_policy_name} receives {current_policy_votes} votes.
+                    {new_policy_name} receives {new_policy_votes} votes.
+                    So, {new_policy_name} defeats {current_policy_name}, and {new_policy_name} is adopted.
+                    """,
+                    fontsize=9, color='black'
+                )
+                print(f"Frame {f_num} created")
 
         def frame_gen():
             f_num = 0
             while True:
                 # TODO: check if off by one at all in max_steps condition
                 if policy_after_step[f_num] == goal_policy or f_num >= max_steps:
+                    if f_num >= max_steps:
+                        print(f"Could not reach the goal policy after {max_steps} steps.")
                     break
                 yield f_num
                 f_num += 1
@@ -333,7 +355,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
 
         ani = animation.FuncAnimation(fig, make_frame, frames=frame_gen(), init_func=init)
         # Save to mp4
-        ani.save(f"{output_folder}/{filename}.mp4", writer='ffmpeg', fps=0.5)
+        ani.save(f"{output_folder}/{filename}.mp4", writer='ffmpeg', fps=fps)
 
 class ElectionDyanamicsMultiParty(ElectionDynamics):
     def __init__(self, voters: list[Voter], evaluation_function: callable):
