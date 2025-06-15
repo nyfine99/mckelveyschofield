@@ -1,0 +1,11 @@
+Some thoughts/ideas:
+
+- Very interesting to see the ripples in using the max total distance strategy - how does 
+increasing the number of voters affect the expected number of steps? Obviously decreases b/c less variance, but how quickly? I suspect doubling the number of voters increases the number of steps  by a factor of rougly sqrt(2). Kinda want to study that more in depth.
+    - Could be a cool plot to see as well.
+- Using the max total distance strategy, how does the spacing between the rings change as we get farther and farther out? Also a good research question.
+    - And again, could be a cool plot.
+- (NEVER MIND - this was only happening b/c I had forgotten to adjust max_r at each step) Interestingly, we seem not to be able to go *arbitrarily* far away with the max total distance algorithm - try a target of 200, 200 to see this. But, perhaps with some random noise/jiggling introduced, we could still take advantage of the system's contours to do better?
+- Could try a strategy which picks at random from best ten boundary points rather than just the best one - could plot the best ten to see the difference.
+    - Perhaps graph them first to see if it would lead to meaningfully different picks.
+- Could potentially have a future iteration where points are bounded and see how far out we can get.
