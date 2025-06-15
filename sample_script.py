@@ -7,7 +7,7 @@ from election_dynamics.electoral_systems import create_simple_electorate
 
 if __name__ == "__main__":
     # defining policies
-    p1 = Policy([55,45], "Centrism") # more moderate
+    p1 = Policy([40,45], "Centrism") # more moderate
     p2 = Policy([80,90], "Extremism") # more extreme
 
     # defining voters
