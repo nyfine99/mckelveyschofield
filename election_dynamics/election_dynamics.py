@@ -218,6 +218,9 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         max_avg_dist = -1
         max_ind = -1
         for i in range(len(inner_bounds)):
+            if inner_bounds[i] == current_policy.values:
+                # This is not a valid next policy, so skip it
+                continue
             curr_avg_dist = sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in self.voters])/len(self.voters)
             if curr_avg_dist > max_avg_dist:
                 max_avg_dist = curr_avg_dist
