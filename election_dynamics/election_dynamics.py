@@ -219,7 +219,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         max_ind = -1
         for i in range(len(inner_bounds)):
             if inner_bounds[i] == current_policy.values:
-                # This is not a valid next policy, so skip it
+                # This policy is not actually on the indifference curve, so skip it
                 continue
             curr_avg_dist = sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in self.voters])/len(self.voters)
             if curr_avg_dist > max_avg_dist:
@@ -394,6 +394,8 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 if policy_after_step[f_num] == goal_policy or f_num >= max_steps:
                     if f_num >= max_steps:
                         print(f"Could not reach the goal policy after {max_steps} steps.")
+                    else:
+                        print("Reached the goal policy!")
                     break
                 yield f_num
                 f_num += 1
@@ -404,6 +406,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         ani = animation.FuncAnimation(fig, make_frame, frames=frame_gen(), init_func=init)
         # Save to mp4
         ani.save(f"{output_folder}/{filename}.mp4", writer='ffmpeg', fps=fps)
+        return policy_after_step
 
 class ElectionDyanamicsMultiParty(ElectionDynamics):
     def __init__(self, voters: list[Voter], evaluation_function: callable):
