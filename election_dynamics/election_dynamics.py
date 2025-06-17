@@ -217,11 +217,23 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             s=200,
             alpha=0.7,
         )
+        if path[-1].values != goal_policy.values:
+            # if the last policy in the path is not the goal policy, plot it as well
+            ax.scatter(
+                [path[-1].values[0]],
+                [path[-1].values[1]], 
+                color="green",
+                marker='o',
+                s=200,
+                alpha=0.7,
+            )
         intermediate_plot.set_label("Intermediate Policies")
+
         original_policy_plot = ax.scatter(
             [original_policy.values[0]],
             [original_policy.values[1]], 
             color=original_color,
+            edgecolors='black',
             marker='X',
             s=200,
         )
@@ -248,7 +260,11 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         label_to_handle = dict(zip(labels, handles))
         ordered_handles = [label_to_handle[label] for label in desired_order]
         plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0., handles=ordered_handles, labels=desired_order)
-        plt.title(f'{original_policy_name} vs {goal_policy_name}: Election Results')
+        title = f'Path from {original_policy_name} to {goal_policy_name}'
+        if path[-1].values != goal_policy.values:
+            # the goal policy was not reached, and the title should reflect this
+            title = f'Attempted Path from {original_policy_name} to {goal_policy_name}'
+        plt.title(title)
         plt.xlabel(f'Position on {self.issue_1}')
         plt.ylabel(f'Position on {self.issue_2}')
 
