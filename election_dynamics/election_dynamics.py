@@ -79,8 +79,8 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         return votes
     
     def plot_election_2d(self, original_policy: Policy, new_policy: Policy, verbose: bool = True):
-        votes = self.obtain_individual_votes(original_policy, new_policy)
-        fig = plt.figure(figsize=(6, 4))
+        # initialize the figure and axes
+        fig = plt.figure(figsize=(6, 4))  # TODO: standardize plot size
         ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
 
         # some settings
