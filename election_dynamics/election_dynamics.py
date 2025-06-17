@@ -304,8 +304,8 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 [original_policy.values[0]],
                 [original_policy.values[1]], 
                 color=original_policy_color,
-                # edgecolors='black',
-                marker='x',
+                edgecolors='black',
+                marker='X',
                 s=200,
                 alpha=original_policy_opacity,
             )
@@ -407,6 +407,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         ani = animation.FuncAnimation(fig, make_frame, frames=frame_gen(), init_func=init)
         # Save to mp4
         ani.save(f"{output_folder}/{filename}.mp4", writer='ffmpeg', fps=fps)
+        plt.close(fig)
         return policy_path
 
 class ElectionDyanamicsMultiParty(ElectionDynamics):
