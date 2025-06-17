@@ -64,26 +64,16 @@ v2 = Voter(Policy([1,1]), utility_function=neg_distance)
 #     Voter(Policy([50, 40])),
 # ]
 
-SEED = 11
+SEED = 53
 NUM_VOTERS = 100
 GOAL_POLICY = [100, 100]
 random.seed(SEED)  # 8 is lopsided, as is 9, though in a different direction
 
 voters = []
-for i in range(NUM_VOTERS):
-    voters.append(
-        Voter(
-            Policy(
-                [
-                    random.sample([i for i in range(100)], 1)[0], 
-                    random.sample([i for i in range(100)], 1)[0]
-                ]
-            ),
-            utility_function=neg_distance
-        )
-    )
+for i in range(100):
+    voters.append(Voter(Policy([gauss(50,15),gauss(50,10)]), utility_function=neg_distance))
 
-electorate = create_two_party_status_quo_preference(voters, "Derekkkkk", "BONIUK")
+electorate = create_two_party_status_quo_preference(voters, "Cats", "Dogs")
 # electorate.plot_election_2d(p1, p2)
 
 average_policy = [
@@ -126,19 +116,19 @@ fig = plt.figure(figsize=(6, 4))
 ax = fig.add_axes([0.2, 0.3, 0.6, 0.6])  # Shrink plot inside the figure
 
 # heatmap
-# heatmap = []
-# heatmap_colors = []
-# for i in range(0,100,1):
-#     for j in range(0,100,1):
-#         heatmap.append([i,j])
-#         heatmap_colors.append(sum([math.dist([i,j], voter.ideal_policy.values) for voter in voters])/len(voters))
-#
-# ax.scatter(
-#     [heat[0] for heat in heatmap], 
-#     [heat[1] for heat in heatmap], 
-#     c=heatmap_colors, 
-#     marker='o'
-# )
+heatmap = []
+heatmap_colors = []
+for i in range(0,100,1):
+    for j in range(0,100,1):
+        heatmap.append([i,j])
+        heatmap_colors.append(sum([math.dist([i,j], voter.ideal_policy.values) for voter in voters])/len(voters))
+
+ax.scatter(
+    [heat[0] for heat in heatmap], 
+    [heat[1] for heat in heatmap], 
+    c=heatmap_colors, 
+    marker='o'
+)
 
 # plotting all voters
 colors = []
@@ -261,13 +251,18 @@ for k in range(1,n_steps):
         color=(0, green_intensity, 0)
     )
 
-    max_avg_dist = -1
-    max_ind = -1
-    for i in range(len(inner_bounds)):
-        curr_avg_dist = sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in voters])/len(voters)
-        if curr_avg_dist > max_avg_dist:
-            max_avg_dist = curr_avg_dist
-            max_ind = i
+    avg_dists = [sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in voters])/len(voters) for i in range(len(inner_bounds))]
+    sorted(zip(inner_bounds, avg_dists))
+    # idea - take the point with the maximum average distance from the voters' ideal policies,
+    # at a 120 degree angle or more from the current policy
+
+    # max_avg_dist = -1
+    # max_ind = -1
+    # for i in range(len(inner_bounds)):
+    #     curr_avg_dist = sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in voters])/len(voters)
+    #     if curr_avg_dist > max_avg_dist:
+    #         max_avg_dist = curr_avg_dist
+    #         max_ind = i
 
     current_policy = Policy(inner_bounds[max_ind])
     ax.scatter(
@@ -278,6 +273,8 @@ for k in range(1,n_steps):
         edgecolors='black',
         # s=blue_size
     )
+    # if max_avg_dist > 18.57259:
+    #     import pdb; pdb.set_trace()
 
 
 
