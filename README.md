@@ -1,6 +1,6 @@
 # mckelveyschofield
 
-![pets_election](https://github.com/user-attachments/assets/66834c4c-b68e-4000-953d-8683cc284afe)
+![run_1](https://github.com/user-attachments/assets/02606108-7236-42b9-b1e4-841a8c6247be)
 
 ## Description
 
@@ -40,3 +40,5 @@ Contributions are welcome! Please open an issue or submit a pull request.
 - Exploration and possible implementation of non-greedy McKelvey-Schofield pathfinding.
 - A justification as to the validity of the greedy McKelvey-Schofield pathfinding algorithm.
 - Work with ranked-choice voting capabilities/animation.
+
+![pets_election](https://github.com/user-attachments/assets/66834c4c-b68e-4000-953d-8683cc284afe)
