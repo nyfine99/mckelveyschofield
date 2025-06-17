@@ -1,8 +1,7 @@
-from random import gauss
+from random import gauss, seed
 
 from policies.policy import Policy
 from voters.simple_voter import SimpleVoter
-from utility_functions.utility_functions import neg_distance
 from election_dynamics.electoral_systems import create_simple_electorate
 
 if __name__ == "__main__":
@@ -11,6 +10,7 @@ if __name__ == "__main__":
     p2 = Policy([80,90], "Extremism") # more extreme
 
     # defining voters
+    seed(42)  # For reproducibility
     voters = []
     for i in range(100):
         voters.append(SimpleVoter(Policy([gauss(50,15),gauss(50,10)])))
