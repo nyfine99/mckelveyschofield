@@ -25,6 +25,7 @@ if __name__ == "__main__":
         os.makedirs(multirun_folder)
         os.makedirs(f"{multirun_folder}/animations")
         os.makedirs(f"{multirun_folder}/path_plots")
+        os.makedirs(f"{multirun_folder}/average_distances_plots")
     
     for run_num in range(1,n_sims+1):
         seed_val = run_num  # Using run_num as the seed for reproducibility
@@ -63,6 +64,15 @@ if __name__ == "__main__":
         # plotting the path
         save_file = f"{multirun_folder}/path_plots/run_{run_num}.png"
         electorate.plot_mckelvey_schofield_path(p1, p2, path, save_file)
+
+        # plotting the average distances
+        save_file = f"run_{run_num}.png"
+        electorate.plot_path_average_distances(
+            path,
+            max_steps,
+            output_folder=f"{multirun_folder}/average_distances_plots",
+            filename=save_file,
+        )
 
         # data for csvs
         input_data_to_append = {
