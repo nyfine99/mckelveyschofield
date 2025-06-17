@@ -394,6 +394,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         original_policy, 
         goal_policy, 
         max_steps=50, 
+        step_selection_function="mckelvey_schofield_greedy_with_adjustment_avg_dist",
         output_folder="output",
         filename=f"output",
         verbose=True,
@@ -414,7 +415,12 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.55, 0.55])
             current_policy = policy_path[f_num]
-            new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_with_adjustment_avg_dist(current_policy, policy_path))
+            if step_selection_function == "mckelvey_schofield_greedy_with_adjustment_avg_dist":
+                new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_with_adjustment_avg_dist(current_policy, policy_path))
+            elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
+                new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_avg_dist(current_policy))
+            else:
+                raise ValueError(f"Unknown step selection function: {step_selection_function}")
 
             # initial plot settings
             current_color = "green" if f_num % 2 == 0 else "orange"
