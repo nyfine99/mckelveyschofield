@@ -1,3 +1,4 @@
+from random import gauss
 from random import gauss, seed
 
 from policies.policy import Policy
