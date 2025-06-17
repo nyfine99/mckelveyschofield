@@ -80,7 +80,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     
     def plot_election_2d(self, original_policy: Policy, new_policy: Policy, verbose: bool = True):
         # initialize the figure and axes
-        fig = plt.figure(figsize=(6, 4))  # TODO: standardize plot size
+        fig = plt.figure(figsize=(12, 8))
         ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
 
         # some settings
@@ -169,6 +169,95 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
 
         plt.grid(True)
         plt.show()
+
+    def plot_mckelvey_schofield_path(
+        self, 
+        original_policy: Policy, 
+        goal_policy: Policy, 
+        path: list[Policy],
+        save_file: str = None,
+    ):
+        # plotting the path
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
+
+        # some settings
+        original_policy_name = "Original Policy" if original_policy.name is None else original_policy.name
+        goal_policy_name = "New Policy" if original_policy.name is None else goal_policy.name
+        original_color = "blue"
+        goal_color = "red"
+
+        # plotting all voters
+        votes = self.obtain_individual_votes(original_policy, goal_policy)
+        
+        voters_plot = ax.scatter(
+            [voter.ideal_policy.values[0] for voter in self.voters], 
+            [voter.ideal_policy.values[1] for voter in self.voters], 
+            c='black', 
+            marker='o'
+        )
+        voters_plot.set_label(f"Voters")
+        
+        # plotting path
+        ax.quiver(
+            [p.values[0] for p in path[:-1]], 
+            [p.values[1] for p in path[:-1]], 
+            [path[i+1].values[0] - path[i].values[0] for i in range(len(path)-1)], 
+            [path[i+1].values[1] - path[i].values[1] for i in range(len(path)-1)],
+            angles='xy', scale_units='xy', scale=1, color='green', alpha=0.7
+        )
+        
+
+        # plotting policies
+        intermediate_plot = ax.scatter(
+            [p.values[0] for p in path[1:-1]],
+            [p.values[1] for p in path[1:-1]], 
+            color="green",
+            marker='o',
+            s=200,
+            alpha=0.7,
+        )
+        intermediate_plot.set_label("Intermediate Policies")
+        original_policy_plot = ax.scatter(
+            [original_policy.values[0]],
+            [original_policy.values[1]], 
+            color=original_color,
+            marker='X',
+            s=200,
+        )
+        original_policy_plot.set_label(original_policy_name)
+
+        goal_policy_plot = ax.scatter(
+            [goal_policy.values[0]],
+            [goal_policy.values[1]], 
+            color=goal_color,
+            edgecolors='black',
+            marker='*',
+            s=200,
+        )
+        goal_policy_plot.set_label(goal_policy_name)
+
+        # title, labels, legend
+        desired_order = [
+            original_policy_name,
+            goal_policy_name,
+            'Intermediate Policies',
+            'Voters'
+        ]
+        handles, labels = plt.gca().get_legend_handles_labels()
+        label_to_handle = dict(zip(labels, handles))
+        ordered_handles = [label_to_handle[label] for label in desired_order]
+        plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0., handles=ordered_handles, labels=desired_order)
+        plt.title(f'{original_policy_name} vs {goal_policy_name}: Election Results')
+        plt.xlabel(f'Position on {self.issue_1}')
+        plt.ylabel(f'Position on {self.issue_2}')
+
+        plt.grid(True)
+        if save_file is not None:
+            plt.savefig(save_file, bbox_inches='tight')
+        else:
+            plt.show()
+        plt.close(fig)
 
 
 class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
