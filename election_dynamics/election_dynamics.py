@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import math
 from ordered_set import OrderedSet
+import numpy as np
+import random
 
 from abc import ABC, abstractmethod
 
@@ -332,13 +334,66 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 max_ind = i
 
         return inner_bounds[max_ind]
-        
+    
+
+    def mckelvey_schofield_greedy_with_adjustment_avg_dist(
+        self,
+        current_policy,
+        policy_path
+    ) -> Policy:
+        """
+        Select the next policy using a greedy algorithm - choose the policy with the highest average distance
+        from all voters which beats the current policy.
+        """
+        max_dist = max([math.dist(current_policy.values, voter.ideal_policy.values) for voter in self.voters])
+        max_r = 2.0 * max_dist
+        inner_bounds = []
+        outer_bounds = []
+        number_of_points = 360
+        angles = [math.pi * 2.0 * n/(float(number_of_points)) for n in range(number_of_points)]
+        for angle in angles:
+            inner_bounds.append(current_policy.values)
+            outer_bounds.append([current_policy.values[0] + max_r * math.sin(angle), current_policy.values[1] + max_r * math.cos(angle)])
+
+        num_halving_iterations = 12
+        for i in range(len(inner_bounds)):
+            for j in range(num_halving_iterations):
+                curr_mid_policy_values = [
+                    (inner_bounds[i][0] + outer_bounds[i][0])/2, (inner_bounds[i][1] + outer_bounds[i][1])/2
+                ]
+                curr_mid_policy = Policy(curr_mid_policy_values)
+                if self.compare_policies(current_policy, curr_mid_policy):
+                    # curr_mid policy won
+                    inner_bounds[i] = curr_mid_policy_values
+                else:
+                    outer_bounds[i] = curr_mid_policy_values
+
+        max_avg_dist = -1
+        max_ind = -1
+        for i in range(len(inner_bounds)):
+            if inner_bounds[i] == current_policy.values:
+                # This policy is not actually on the indifference curve, so skip it
+                continue
+            curr_avg_dist = sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in self.voters])/len(self.voters)
+            if curr_avg_dist > max_avg_dist:
+                max_avg_dist = curr_avg_dist
+                max_ind = i
+
+        poss_next_policy = inner_bounds[max_ind]
+        if len(policy_path) > 1:  # if there are enough policies in the path, adjust the next policy to avoid cycling
+            epsilon = np.mean([math.dist(policy_path[i].values, policy_path[i-1].values) for i in range(1,len(policy_path))])/10  # small adjustment to avoid cycling
+            counter = 0
+            while math.dist(poss_next_policy, current_policy.values) < epsilon and counter < 10:
+                poss_next_policy = random.choice(inner_bounds)
+                counter += 1
+
+        return poss_next_policy
     
     def animate_mckelvey_schofield(
         self, 
         original_policy, 
         goal_policy, 
-        max_steps=100, 
+        max_steps=50, 
         output_folder="output",
         filename=f"output",
         verbose=True,
@@ -359,7 +414,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.55, 0.55])
             current_policy = policy_path[f_num]
-            new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_avg_dist(current_policy))
+            new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_with_adjustment_avg_dist(current_policy, policy_path))
 
             # initial plot settings
             current_color = "green" if f_num % 2 == 0 else "orange"
@@ -514,6 +569,39 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         ani.save(f"{output_folder}/{filename}.mp4", writer='ffmpeg', fps=fps)
         plt.close(fig)
         return policy_path
+    
+    def plot_path_average_distances(
+        self, 
+        path: list[Policy],
+        max_steps: int,
+        output_folder="output",
+        filename=f"output",
+    ):
+        # plot settings
+        fig = plt.figure(figsize=(12, 8))
+
+        # obtaining average values
+        distances = []
+        for p in path:
+            curr_avg_dist = sum([math.dist(p.values, voter.ideal_policy.values) for voter in self.voters])/len(self.voters)
+            distances.append(curr_avg_dist)
+
+        # creating plot
+        plt.plot(
+            [i for i in range(len(distances))],
+            distances, 
+            color='black', 
+            linestyle='-', 
+            marker='o'
+        )
+
+        title = 'Average Distance Values for Policies Along the Path'
+        plt.title(title)
+        plt.xlim(right=max_steps)  # adjust the right leaving left unchanged
+        plt.xlabel(f'Policy')
+        plt.ylabel(f'Average Distance from Voter Preferences')
+        plt.savefig(f"{output_folder}/{filename}", bbox_inches='tight')
+        plt.close(fig)
 
 class ElectionDyanamicsMultiParty(ElectionDynamics):
     def __init__(self, voters: list[Voter], evaluation_function: callable):
