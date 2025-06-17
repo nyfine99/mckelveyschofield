@@ -239,7 +239,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         verbose=True,
         fps=0.5,
     ):
-        policy_after_step = {0: original_policy}
+        policy_path = [original_policy]  # Initialize the path with the original policy
         fig = plt.figure()
 
         original_policy_color = "blue"
@@ -249,11 +249,11 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
 
         def make_frame(f_num):
             if verbose:
-                print(f"Starting to create frame {f_num}")
+                print(f"Starting to create frame {f_num+1}")
 
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.55, 0.55])
-            current_policy = policy_after_step[f_num]
+            current_policy = policy_path[f_num]
             new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_avg_dist(current_policy))
 
             # initial plot settings
@@ -342,7 +342,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 )
                 new_policy_plot.set_label(new_policy_name)
 
-            policy_after_step[f_num+1] = new_policy
+            policy_path.append(new_policy)
 
             # title, labels, legend
             desired_order = [
@@ -385,13 +385,13 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                     """,
                     fontsize=9, color='black'
                 )
-                print(f"Frame {f_num} created")
+                print(f"Frame {f_num+1} created")
 
         def frame_gen():
             f_num = 0
             while True:
                 # TODO: check if off by one at all in max_steps condition
-                if policy_after_step[f_num] == goal_policy or f_num >= max_steps:
+                if policy_path[f_num] == goal_policy or f_num >= max_steps:
                     if f_num >= max_steps:
                         print(f"Could not reach the goal policy after {max_steps} steps.")
                     else:
@@ -406,7 +406,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         ani = animation.FuncAnimation(fig, make_frame, frames=frame_gen(), init_func=init)
         # Save to mp4
         ani.save(f"{output_folder}/{filename}.mp4", writer='ffmpeg', fps=fps)
-        return policy_after_step
+        return policy_path
 
 class ElectionDyanamicsMultiParty(ElectionDynamics):
     def __init__(self, voters: list[Voter], evaluation_function: callable):
