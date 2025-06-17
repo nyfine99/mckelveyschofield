@@ -50,7 +50,7 @@ if __name__ == "__main__":
             p1,
             p2,
             max_steps,
-            step_selection_function='mckelvey_schofield_greedy_avg_dist',
+            step_selection_function='mckelvey_schofield_greedy_with_adjustment_avg_dist',
             output_folder=f"{multirun_folder}/animations", 
             filename=f"run_{run_num}",
             fps=1,
