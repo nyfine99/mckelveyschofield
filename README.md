@@ -2,6 +2,8 @@
 
 ![pets_election](https://github.com/user-attachments/assets/66834c4c-b68e-4000-953d-8683cc284afe)
 
+![run_1](https://github.com/user-attachments/assets/02606108-7236-42b9-b1e4-841a8c6247be)
+
 ## Description
 
 The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2%80%93Schofield_chaos_theorem) guarantees that, provided certain conditions are met, a set of voters with multidimensional preferences can be made to choose any policy over any other through a series of binary choices. This repo implements an algorithm which demostrates this visually, as well as providing the infrastructure for future expansions of this project towards exploring ranked-choice voting, finding the shortest possible path between any two policy positions, etc.
