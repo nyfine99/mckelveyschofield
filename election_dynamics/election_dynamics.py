@@ -392,10 +392,11 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             while True:
                 # TODO: check if off by one at all in max_steps condition
                 if policy_path[f_num] == goal_policy or f_num >= max_steps:
-                    if f_num >= max_steps:
-                        print(f"Could not reach the goal policy after {max_steps} steps.")
-                    else:
-                        print("Reached the goal policy!")
+                    if verbose:
+                        if f_num >= max_steps:
+                            print(f"Could not reach the goal policy after {max_steps} steps.")
+                        else:
+                            print("Reached the goal policy!")
                     break
                 yield f_num
                 f_num += 1
