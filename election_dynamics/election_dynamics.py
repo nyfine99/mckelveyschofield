@@ -428,6 +428,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         def make_frame(f_num):
             if verbose:
                 print(f"Starting to create frame {f_num+1}")
+                overall_s_time = datetime.now()
 
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.55, 0.55])
@@ -571,6 +572,8 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                     """,
                     fontsize=9, color='black'
                 )
+                overall_e_time = datetime.now()
+                print(overall_e_time - overall_s_time)
                 print(f"Frame {f_num+1} created")
 
         def frame_gen():
