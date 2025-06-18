@@ -65,6 +65,8 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         return counts
     
     def obtain_individual_votes(self, original_policy: Policy, new_policy: Policy) -> np.array:
+        # it could be more performant to take this out of numpy
+        # but numpy should certainly be used for the overriding functions
         original_utilities = np.array([voter.get_utility(original_policy) for voter in self.voters])
         new_utilities = np.array([voter.get_utility(new_policy) for voter in self.voters])
         votes = np.full(len(self.voters), -1)
