@@ -65,19 +65,15 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         counts[1] = sum([1 for vote in votes if vote == 1])
         return counts
     
-    def obtain_individual_votes(self, original_policy: Policy, new_policy: Policy):
-        votes = len(self.voters)*[-1] # index 0 represents the original_policy count, index 1 the new policy
-        for i in range(0,len(self.voters)):
-            voter = self.voters[i]
-            original_utility = voter.get_utility(original_policy)
-            new_utility = voter.get_utility(new_policy)
-            if original_utility > new_utility:
-                votes[i] = 0
-            elif original_utility == new_utility and self.tiebreak_func is not None:
-                votes[i] = self.tiebreak_func()
-            elif original_utility < new_utility:
-                votes[i] = 1
-            # otherwise, the voter doesn't vote
+    def obtain_individual_votes(self, original_policy: Policy, new_policy: Policy) -> np.array:
+        original_utilities = np.array([voter.get_utility(original_policy) for voter in self.voters])
+        new_utilities = np.array([voter.get_utility(new_policy) for voter in self.voters])
+        votes = np.full(len(self.voters), -1)
+        votes[original_utilities > new_utilities] = 0
+        votes[original_utilities < new_utilities] = 1
+        if self.tiebreak_func is not None:
+            ties = (original_utilities == new_utilities)
+            votes[ties] = [self.tiebreak_func() for _ in range(np.sum(ties))]
         return votes
     
     def plot_election_2d(self, original_policy: Policy, new_policy: Policy, verbose: bool = True):
@@ -98,23 +94,25 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         voters_by_vote = {"original": [], "new": [], "undecided": []}
         policy_colors = {"original": original_color, "new": new_color, "undecided": undecided_color}
         policy_names = {"original": original_policy_name, "new": new_policy_name, "undecided": undecided_name}
-        for i in range(len(self.voters)):
-            if votes[i] == 0:
+        for i, vote in enumerate(votes):
+            if vote == 0:
                 voters_by_vote["original"].append(self.voters[i])
-            elif votes[i] == 1:
+            elif vote == 1:
                 voters_by_vote["new"].append(self.voters[i])
             else:
                 voters_by_vote["undecided"].append(self.voters[i])
         
         for k in voters_by_vote.keys():
-            voters_plot = ax.scatter(
-                [voter.ideal_policy.values[0] for voter in voters_by_vote[k]], 
-                [voter.ideal_policy.values[1] for voter in voters_by_vote[k]], 
-                c=policy_colors[k], 
-                marker='o'
-            )
-            curr_name = policy_names[k]
-            voters_plot.set_label(f"{curr_name} Voters")
+            if voters_by_vote[k]:
+                arr = np.array([voter.ideal_policy.values for voter in voters_by_vote[k]])
+                voters_plot = ax.scatter(
+                    arr[:, 0], 
+                    arr[:, 1], 
+                    c=policy_colors[k], 
+                    marker='o',
+                )
+                curr_name = policy_names[k]
+                voters_plot.set_label(f"{curr_name} Voters")
         
         # plotting policies and differentiating winner from loser
         winner = self.compare_policies(original_policy,new_policy)
@@ -151,7 +149,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         ]
         handles, labels = plt.gca().get_legend_handles_labels()
         label_to_handle = dict(zip(labels, handles))
-        ordered_handles = [label_to_handle[label] for label in desired_order]
+        ordered_handles = [label_to_handle[label] for label in desired_order if label in label_to_handle]
         plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0., handles=ordered_handles, labels=desired_order)
         plt.title(f'{original_policy_name} vs {new_policy_name}: Election Results')
         plt.xlabel(f'Position on {self.issue_1}')

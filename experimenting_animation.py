@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from policies.policy import Policy
 from voters.simple_voter import SimpleVoter
-from utility_functions.utility_functions import neg_distance, neg_distance_with_limit
+from utility_functions.utility_functions import neg_distance, capped_neg_distance
 from election_dynamics.electoral_systems import create_simple_electorate
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
