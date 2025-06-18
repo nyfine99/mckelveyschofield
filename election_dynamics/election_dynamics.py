@@ -380,12 +380,18 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 max_ind = i
 
         poss_next_policy = inner_bounds[max_ind]
-        if len(policy_path) > 1:  # if there are enough policies in the path, adjust the next policy to avoid cycling
-            epsilon = np.mean([math.dist(policy_path[i].values, policy_path[i-1].values) for i in range(1,len(policy_path))])/10  # small adjustment to avoid cycling
-            counter = 0
-            while math.dist(poss_next_policy, current_policy.values) < epsilon and counter < 10:
-                poss_next_policy = random.choice(inner_bounds)
-                counter += 1
+        if len(policy_path) > 1:
+            average_policy_gap = np.mean([math.dist(policy_path[i].values, policy_path[i-1].values) for i in range(1,len(policy_path))])
+            gap_tolerance = 0.1
+            forced_movement_factor = 0.5
+            if math.dist(poss_next_policy, current_policy.values) < gap_tolerance * average_policy_gap:  # this will likely cycle, which we want to avoid
+                # minimum distance allowed between the current policy and the next policy; doing this to create significant movement
+                minimum_dist = average_policy_gap * forced_movement_factor
+                greater_than_minimum = [p for p in inner_bounds if math.dist(p, current_policy.values) >= minimum_dist]
+                if greater_than_minimum != []:
+                    poss_next_policy = random.choice(greater_than_minimum)
+                else:
+                    poss_next_policy = random.choice(inner_bounds)
 
         return poss_next_policy
     
