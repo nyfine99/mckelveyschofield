@@ -61,7 +61,6 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     def tabulate_votes(self, original_policy: Policy, new_policy: Policy):
         counts = [0,0] # index 0 represents the original_policy count, index 1 the new policy
         votes = self.obtain_individual_votes(original_policy, new_policy)
-        votes = np.array(votes)
         counts = [np.sum(votes == 0), np.sum(votes == 1)]
         return counts
     
