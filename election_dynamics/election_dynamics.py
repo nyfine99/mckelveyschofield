@@ -284,10 +284,22 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         issue_2: str = "Issue 2",
     ):
         self.voters = voters
+        self.voter_arr = np.array([voter.ideal_policy.values for voter in self.voters])
         self.evaluation_function = status_quo_preference
         self.tiebreak_func = None  # used when a voter is ambivalent to distribute their vote
         self.issue_1 = issue_1  # Issue 1 name
         self.issue_2 = issue_2  # Issue 2 name
+
+    def obtain_individual_votes(self, original_policy: Policy, new_policy: Policy) -> np.array:
+        original_utilities = -np.linalg.norm(self.voter_arr - original_policy.values, axis=1)
+        new_utilities = -np.linalg.norm(self.voter_arr - new_policy.values, axis=1)
+        votes = np.full(len(self.voters), -1)
+        votes[original_utilities > new_utilities] = 0
+        votes[original_utilities < new_utilities] = 1
+        if self.tiebreak_func is not None:
+            ties = (original_utilities == new_utilities)
+            votes[ties] = [self.tiebreak_func() for _ in range(np.sum(ties))]
+        return votes
 
     def mckelvey_schofield_greedy_avg_dist(
         self,
@@ -297,8 +309,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         Select the next policy using a greedy algorithm - choose the policy with the highest average distance
         from all voters which beats the current policy.
         """
-        voter_arr = np.array([voter.ideal_policy.values for voter in self.voters])  # TODO: consider making this a property
-        dists = np.linalg.norm(voter_arr - current_policy.values, axis=1)
+        dists = np.linalg.norm(self.voter_arr - current_policy.values, axis=1)
         max_dist = np.max(dists)
         max_r = 2.0 * max_dist
         number_of_points = 360
@@ -327,7 +338,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 # This policy is not actually on the indifference curve, but rather is the current policy;
                 # so, skip it
                 continue
-            avg_dist = np.mean(np.linalg.norm(voter_arr - bound, axis=1))
+            avg_dist = np.mean(np.linalg.norm(self.voter_arr - bound, axis=1))
             if avg_dist > max_avg_dist:
                 max_avg_dist = avg_dist
                 max_ind = i
@@ -420,12 +431,15 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.55, 0.55])
             current_policy = policy_path[f_num]
+            s_time = datetime.now()
             if step_selection_function == "mckelvey_schofield_greedy_with_adjustment_avg_dist":
                 new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_with_adjustment_avg_dist(current_policy, policy_path))
             elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
                 new_policy = goal_policy if self.compare_policies(current_policy, goal_policy) == 1 else Policy(self.mckelvey_schofield_greedy_avg_dist(current_policy))
             else:
                 raise ValueError(f"Unknown step selection function: {step_selection_function}")
+            e_time = datetime.now()
+            print(e_time - s_time)
 
             # initial plot settings
             current_color = "green" if f_num % 2 == 0 else "orange"
