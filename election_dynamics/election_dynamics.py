@@ -61,8 +61,8 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     def tabulate_votes(self, original_policy: Policy, new_policy: Policy):
         counts = [0,0] # index 0 represents the original_policy count, index 1 the new policy
         votes = self.obtain_individual_votes(original_policy, new_policy)
-        counts[0] = sum([1 for vote in votes if vote == 0])
-        counts[1] = sum([1 for vote in votes if vote == 1])
+        votes = np.array(votes)
+        counts = [np.sum(votes == 0), np.sum(votes == 1)]
         return counts
     
     def obtain_individual_votes(self, original_policy: Policy, new_policy: Policy) -> np.array:
@@ -261,7 +261,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         ordered_handles = [label_to_handle[label] for label in desired_order]
         plt.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0., handles=ordered_handles, labels=desired_order)
         title = f'Path from {original_policy_name} to {goal_policy_name}'
-        if path[-1].values != goal_policy.values:
+        if not np.allclose(path[-1].values, goal_policy.values):
             # the goal policy was not reached, and the title should reflect this
             title = f'Attempted Path from {original_policy_name} to {goal_policy_name}'
         plt.title(title)
@@ -297,21 +297,21 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         Select the next policy using a greedy algorithm - choose the policy with the highest average distance
         from all voters which beats the current policy.
         """
-        max_dist = max([math.dist(current_policy.values, voter.ideal_policy.values) for voter in self.voters])
+        voter_arr = np.array([voter.ideal_policy.values for voter in self.voters])  # TODO: consider making this a property
+        dists = np.linalg.norm(voter_arr - current_policy.values, axis=1)
+        max_dist = np.max(dists)
         max_r = 2.0 * max_dist
-        inner_bounds = []
-        outer_bounds = []
         number_of_points = 360
-        angles = [math.pi * 2.0 * n/(float(number_of_points)) for n in range(number_of_points)]
-        for angle in angles:
-            inner_bounds.append(current_policy.values)
-            outer_bounds.append([current_policy.values[0] + max_r * math.sin(angle), current_policy.values[1] + max_r * math.cos(angle)])
+        angles = np.linspace(0, 2 * np.pi, number_of_points, endpoint=False)
+        inner_bounds = [current_policy.values.copy() for _ in angles]
+        outer_bounds = [current_policy.values + max_r * np.array([np.sin(angle), np.cos(angle)]) for angle in angles]
 
         num_halving_iterations = 12
         for i in range(len(inner_bounds)):
-            for j in range(num_halving_iterations):
+            for _ in range(num_halving_iterations):
                 curr_mid_policy_values = [
-                    (inner_bounds[i][0] + outer_bounds[i][0])/2, (inner_bounds[i][1] + outer_bounds[i][1])/2
+                    (inner_bounds[i][0] + outer_bounds[i][0])/2, 
+                    (inner_bounds[i][1] + outer_bounds[i][1])/2
                 ]
                 curr_mid_policy = Policy(curr_mid_policy_values)
                 if self.compare_policies(current_policy, curr_mid_policy):
@@ -322,13 +322,14 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
 
         max_avg_dist = -1
         max_ind = -1
-        for i in range(len(inner_bounds)):
-            if inner_bounds[i] == current_policy.values:
-                # This policy is not actually on the indifference curve, so skip it
+        for i, bound in enumerate(inner_bounds):
+            if np.allclose(bound, current_policy.values):
+                # This policy is not actually on the indifference curve, but rather is the current policy;
+                # so, skip it
                 continue
-            curr_avg_dist = sum([math.dist(inner_bounds[i], voter.ideal_policy.values) for voter in self.voters])/len(self.voters)
-            if curr_avg_dist > max_avg_dist:
-                max_avg_dist = curr_avg_dist
+            avg_dist = np.mean(np.linalg.norm(voter_arr - bound, axis=1))
+            if avg_dist > max_avg_dist:
+                max_avg_dist = avg_dist
                 max_ind = i
 
         return inner_bounds[max_ind]
