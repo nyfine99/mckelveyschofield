@@ -8,7 +8,7 @@ from election_dynamics.electoral_systems import create_simple_electorate
 
 if __name__ == "__main__":
     # defining policies
-    p1 = Policy([45,40], "Centrism") # more moderate
+    p1 = Policy([45,50], "Centrism") # more moderate
     p2 = Policy([80,90], "Extremism") # more extreme
 
     # defining voters
@@ -22,6 +22,9 @@ if __name__ == "__main__":
 
     # plotting an election
     # electorate.plot_election_2d(p1, p2, verbose=True)
+
+    # plotting a winset
+    # electorate.plot_winset_boundary(p1, n_directions=360, n_halving_iterations=12)
 
     # plotting a path from the moderate position to the extreme one
     s_time = datetime.now()
