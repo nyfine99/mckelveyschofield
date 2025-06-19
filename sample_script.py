@@ -1,4 +1,6 @@
 from random import gauss, seed
+import numpy as np
+from datetime import datetime
 
 from policies.policy import Policy
 from voters.simple_voter import SimpleVoter
@@ -6,14 +8,14 @@ from election_dynamics.electoral_systems import create_simple_electorate
 
 if __name__ == "__main__":
     # defining policies
-    p1 = Policy([40,45], "Centrism") # more moderate
+    p1 = Policy([45,40], "Centrism") # more moderate
     p2 = Policy([80,90], "Extremism") # more extreme
 
     # defining voters
     seed(42)  # For reproducibility
     voters = []
     for i in range(100):
-        voters.append(SimpleVoter(Policy([gauss(50,15),gauss(50,10)])))
+        voters.append(SimpleVoter(Policy(np.array([gauss(50,15),gauss(50,10)]))))
 
     # defining electorate
     electorate = create_simple_electorate(voters, "Example Issue 1", "Example Issue 2")
@@ -22,4 +24,8 @@ if __name__ == "__main__":
     # electorate.plot_election_2d(p1, p2, verbose=True)
 
     # plotting a path from the moderate position to the extreme one
-    electorate.animate_mckelvey_schofield(p1, p2, 40, filename="example_output", verbose=True)
+    s_time = datetime.now()
+    path = electorate.animate_mckelvey_schofield(p1, p2, 50, step_selection_function="mckelvey_schofield_greedy_with_adjustment_avg_dist", filename="example_output", plot_verbose=True, print_verbose=True)
+    e_time = datetime.now()
+    print(f"Path animation completed in {e_time - s_time} seconds.")
+    electorate.plot_mckelvey_schofield_path(p1, p2, path, save_file="output/example_output_path.png")
