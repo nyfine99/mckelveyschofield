@@ -267,7 +267,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             s=200,
             alpha=0.7,
         )
-        if path[-1].values != goal_policy.values:
+        if not np.allclose(path[-1].values, goal_policy.values):
             # if the last policy in the path is not the goal policy, plot it as well
             ax.scatter(
                 [path[-1].values[0]],
@@ -367,23 +367,36 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             utilities = -np.linalg.norm(self.voter_arr - policy.values, axis=1)
             self.calculated_utilities[key] = utilities
         return utilities
-    
-    def generate_winset_boundary(self, current_policy: Policy, n_directions = 360, n_halving_iterations = 12) -> np.ndarray:
+
+    def generate_winset_boundary(
+        self,
+        current_policy: Policy,
+        n_directions=360,
+        n_halving_iterations=12,
+        angle_offset: float = 0.0,
+    ) -> np.ndarray:
+        # TODO: add a function to plot the winset boundary
         # setting up recurring values
         voters_policy_values = self.voter_arr
         current_policy_values = current_policy.values  # shape (2,)
-        current_policy_voter_dists = np.linalg.norm(voters_policy_values - current_policy_values, axis=1)
+        current_policy_voter_dists = np.linalg.norm(
+            voters_policy_values - current_policy_values, axis=1
+        )
 
         # set up directions (360 vectors in circle)
-        angles = np.linspace(0, 2 * np.pi, n_directions, endpoint=False)
+        angles = np.linspace(
+            angle_offset, 2 * np.pi + angle_offset, n_directions, endpoint=False
+        )
         directions = np.stack(
             [np.sin(angles), np.cos(angles)], axis=1
         )  # shape (360, 2)
 
         # set up initial inner and outer bounds for winset boundary in each direction (shape: (360, 2))
-        inner_bounds = np.tile(current_policy_values, (n_directions, 1))  # each row is the current policy
+        inner_bounds = np.tile(
+            current_policy_values, (n_directions, 1)
+        )  # each row is the current policy
         max_dist = np.max(current_policy_voter_dists)
-        # outer bounds of preferable policies will be at most twice the maximum distance 
+        # outer bounds of preferable policies will be at most twice the maximum distance
         # from the current policy to any voter's ideal policy
         max_r = 2.0 * max_dist
         outer_bounds = inner_bounds + max_r * directions
@@ -421,10 +434,16 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         boundary_points_voters_deltas = (
             boundary_points[:, None, :] - self.voter_arr[None, :, :]
         )  # shape (360, V, 2)
-        boundary_points_voters_dists = np.linalg.norm(boundary_points_voters_deltas, axis=2)  # shape (360, V)
+        boundary_points_voters_dists = np.linalg.norm(
+            boundary_points_voters_deltas, axis=2
+        )  # shape (360, V)
         avg_boundary_points_voters_dists = boundary_points_voters_dists.mean(axis=1)
-        arg_max = np.argmax(avg_boundary_points_voters_dists)  # index of the maximum average distance
-        return Policy(boundary_points[arg_max])  # return the policy with the maximum average distance
+        arg_max = np.argmax(
+            avg_boundary_points_voters_dists
+        )  # index of the maximum average distance
+        return Policy(
+            boundary_points[arg_max]
+        )  # return the policy with the maximum average distance
 
     def mckelvey_schofield_greedy_with_adjustment_avg_dist(
         self, current_policy, policy_path
@@ -433,88 +452,46 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         Select the next policy using a greedy algorithm - choose the policy with the highest average distance
         from all voters which beats the current policy.
         """
+        boundary_points = self.generate_winset_boundary(current_policy)
+        boundary_points_voters_deltas = (
+            boundary_points[:, None, :] - self.voter_arr[None, :, :]
+        )  # shape (360, V, 2)
+        boundary_points_voters_dists = np.linalg.norm(
+            boundary_points_voters_deltas, axis=2
+        )  # shape (360, V)
+        avg_boundary_points_voters_dists = boundary_points_voters_dists.mean(axis=1)
+        arg_max = np.argmax(
+            avg_boundary_points_voters_dists
+        )  # index of the maximum average distance
 
-        # TODO: do path creation before animation step for performance
-        max_dist = max(
-            [
-                math.dist(current_policy.values, voter.ideal_policy.values)
-                for voter in self.voters
-            ]
-        )
-        max_r = 2.0 * max_dist
-        inner_bounds = []
-        outer_bounds = []
-        number_of_points = 360
-        angles = [
-            math.pi * 2.0 * n / (float(number_of_points))
-            for n in range(number_of_points)
-        ]
-        for angle in angles:
-            inner_bounds.append(current_policy.values)
-            outer_bounds.append(
-                [
-                    current_policy.values[0] + max_r * math.sin(angle),
-                    current_policy.values[1] + max_r * math.cos(angle),
-                ]
-            )
-
-        num_halving_iterations = 12
-        for i in range(len(inner_bounds)):
-            for j in range(num_halving_iterations):
-                curr_mid_policy_values = [
-                    (inner_bounds[i][0] + outer_bounds[i][0]) / 2,
-                    (inner_bounds[i][1] + outer_bounds[i][1]) / 2,
-                ]
-                curr_mid_policy = Policy(curr_mid_policy_values)
-                if self.compare_policies(current_policy, curr_mid_policy):
-                    # curr_mid policy won
-                    inner_bounds[i] = curr_mid_policy_values
-                else:
-                    outer_bounds[i] = curr_mid_policy_values
-
-        max_avg_dist = -1
-        max_ind = -1
-        for i in range(len(inner_bounds)):
-            if inner_bounds[i] == current_policy.values:
-                # This policy is not actually on the indifference curve, so skip it
-                continue
-            curr_avg_dist = sum(
-                [
-                    math.dist(inner_bounds[i], voter.ideal_policy.values)
-                    for voter in self.voters
-                ]
-            ) / len(self.voters)
-            if curr_avg_dist > max_avg_dist:
-                max_avg_dist = curr_avg_dist
-                max_ind = i
-
-        poss_next_policy = inner_bounds[max_ind]
+        poss_next_policy_values = boundary_points[
+            arg_max
+        ]  # the policy with the maximum average distance
         if len(policy_path) > 1:
-            average_policy_gap = np.mean(
-                [
-                    math.dist(policy_path[i].values, policy_path[i - 1].values)
-                    for i in range(1, len(policy_path))
-                ]
-            )
+            # policy_path_arr = np.stack([p.values for p in policy_path])
+            policy_path_arr = np.array([p.values for p in policy_path])  # shape (N, D)
+            gaps = np.linalg.norm(policy_path_arr[1:] - policy_path_arr[:-1], axis=1)
+            average_policy_gap = gaps.mean()
             gap_tolerance = 0.1
             forced_movement_factor = 0.5
             if (
-                math.dist(poss_next_policy, current_policy.values)
+                math.dist(poss_next_policy_values, current_policy.values)
                 < gap_tolerance * average_policy_gap
             ):  # this will likely cycle, which we want to avoid
                 # minimum distance allowed between the current policy and the next policy; doing this to create significant movement
                 minimum_dist = average_policy_gap * forced_movement_factor
-                greater_than_minimum = [
-                    p
-                    for p in inner_bounds
-                    if math.dist(p, current_policy.values) >= minimum_dist
-                ]
-                if greater_than_minimum != []:
-                    poss_next_policy = random.choice(greater_than_minimum)
+                dists_to_current = np.linalg.norm(
+                    boundary_points - current_policy.values, axis=1
+                )
+                greater_than_minimum = boundary_points[dists_to_current >= minimum_dist]
+                if greater_than_minimum.size != 0:
+                    poss_next_policy_values = random.choice(greater_than_minimum)
                 else:
-                    poss_next_policy = random.choice(inner_bounds)
+                    poss_next_policy_values = random.choice(boundary_points)
 
-        return poss_next_policy
+        return Policy(
+            poss_next_policy_values
+        )  # return the policy with the maximum average distance or a forced movement policy
 
     def animate_mckelvey_schofield(
         self,
@@ -524,9 +501,11 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         step_selection_function="mckelvey_schofield_greedy_with_adjustment_avg_dist",
         output_folder="output",
         filename=f"output",
-        verbose=True,
+        plot_verbose=True,
+        print_verbose=False,
         fps=0.5,
     ):
+        # TODO: do path creation before animation step for performance
         policy_path = [original_policy]  # Initialize the path with the original policy
         fig = plt.figure()
 
@@ -542,14 +521,12 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         )
 
         def make_frame(f_num):
-            if verbose:
+            if print_verbose:
                 print(f"Starting to create frame {f_num+1}")
-                overall_s_time = datetime.now()
 
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.55, 0.55])
             current_policy = policy_path[f_num]
-            s_time = datetime.now()
             if (
                 step_selection_function
                 == "mckelvey_schofield_greedy_with_adjustment_avg_dist"
@@ -571,8 +548,6 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 raise ValueError(
                     f"Unknown step selection function: {step_selection_function}"
                 )
-            e_time = datetime.now()
-            print(e_time - s_time)
 
             # initial plot settings
             current_color = "green" if f_num % 2 == 0 else "orange"
@@ -700,7 +675,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             )
 
             # details
-            if verbose:
+            if plot_verbose:
                 vote_totals = self.tabulate_votes(current_policy, new_policy)
                 current_policy_votes = vote_totals[0]
                 new_policy_votes = vote_totals[1]
@@ -716,17 +691,16 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                     fontsize=9,
                     color="black",
                 )
-                overall_e_time = datetime.now()
-                print(overall_e_time - overall_s_time)
+            if print_verbose:
                 print(f"Frame {f_num+1} created")
 
         def frame_gen():
             f_num = 0
             while True:
                 # TODO: check if off by one at all in max_steps condition
-                if policy_path[f_num] == goal_policy or f_num >= max_steps:
-                    if verbose:
-                        if f_num >= max_steps:
+                if np.allclose(policy_path[f_num].values, goal_policy.values) or f_num >= max_steps:
+                    if print_verbose:
+                        if f_num >= max_steps and not np.allclose(policy_path[f_num].values, goal_policy.values):
                             print(
                                 f"Could not reach the goal policy after {max_steps} steps."
                             )
