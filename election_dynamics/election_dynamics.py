@@ -367,26 +367,21 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             utilities = -np.linalg.norm(self.voter_arr - policy.values, axis=1)
             self.calculated_utilities[key] = utilities
         return utilities
-
-    def mckelvey_schofield_greedy_avg_dist(self, current_policy) -> Policy:
-        """
-        Select the next policy using a greedy algorithm - choose the policy with the highest average distance
-        from all voters which beats the current policy.
-        """
+    
+    def generate_winset_boundary(self, current_policy: Policy, n_directions = 360, n_halving_iterations = 12) -> np.ndarray:
         # setting up recurring values
         voters_policy_values = self.voter_arr
         current_policy_values = current_policy.values  # shape (2,)
         current_policy_voter_dists = np.linalg.norm(voters_policy_values - current_policy_values, axis=1)
 
         # set up directions (360 vectors in circle)
-        number_of_directions = 360
-        angles = np.linspace(0, 2 * np.pi, number_of_directions, endpoint=False)
+        angles = np.linspace(0, 2 * np.pi, n_directions, endpoint=False)
         directions = np.stack(
             [np.sin(angles), np.cos(angles)], axis=1
         )  # shape (360, 2)
 
         # set up initial inner and outer bounds for winset boundary in each direction (shape: (360, 2))
-        inner_bounds = np.tile(current_policy_values, (number_of_directions, 1))  # each row is the current policy
+        inner_bounds = np.tile(current_policy_values, (n_directions, 1))  # each row is the current policy
         max_dist = np.max(current_policy_voter_dists)
         # outer bounds of preferable policies will be at most twice the maximum distance 
         # from the current policy to any voter's ideal policy
@@ -394,8 +389,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         outer_bounds = inner_bounds + max_r * directions
 
         # vectorized binary search
-        num_halving_iterations = 12
-        for _ in range(num_halving_iterations):
+        for _ in range(n_halving_iterations):
             mid_points = (inner_bounds + outer_bounds) / 2  # shape (360, 2)
 
             # broadcasted distance computation: (360, V), where V is the number of voters
@@ -412,20 +406,25 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             inner_bounds[wins] = mid_points[wins]
             outer_bounds[~wins] = mid_points[~wins]
 
-        # inner_bounds: shape (N, 2), where N is the number of directions (360)
+        # inner bounds now contains points near the winset boundary which beat the current policy...
+        # ... but must filter out the current policy itself
+        mask = np.all(np.isclose(inner_bounds, current_policy.values), axis=1)
+        filtered_boundary_points = inner_bounds[~mask]
+        return filtered_boundary_points
+
+    def mckelvey_schofield_greedy_avg_dist(self, current_policy) -> Policy:
+        """
+        Select the next policy using a greedy algorithm - choose the policy with the highest average distance
+        from all voters which beats the current policy.
+        """
+        boundary_points = self.generate_winset_boundary(current_policy)
         boundary_points_voters_deltas = (
-            inner_bounds[:, None, :] - voters_policy_values[None, :, :]
+            boundary_points[:, None, :] - self.voter_arr[None, :, :]
         )  # shape (360, V, 2)
         boundary_points_voters_dists = np.linalg.norm(boundary_points_voters_deltas, axis=2)  # shape (360, V)
         avg_boundary_points_voters_dists = boundary_points_voters_dists.mean(axis=1)
-        # filter inner_bounds to only those that are not the current policy
-        mask = not np.allclose(inner_bounds, current_policy_values)
-        filtered_boundary_points = inner_bounds[mask]
-        filtered_avg_dists = avg_boundary_points_voters_dists[mask]
-        arg_max = np.argmax(filtered_avg_dists)  # index of the maximum average distance
-        return Policy(
-            filtered_boundary_points[:, arg_max].reshape(2)
-        )  # return the policy with the maximum average distance
+        arg_max = np.argmax(avg_boundary_points_voters_dists)  # index of the maximum average distance
+        return Policy(boundary_points[arg_max])  # return the policy with the maximum average distance
 
     def mckelvey_schofield_greedy_with_adjustment_avg_dist(
         self, current_policy, policy_path
