@@ -13,13 +13,25 @@ class Policy():
         Params:
             values (list[float|int] | np.array): the values of the policy along each issue/axis.
         """
-        self._values = np.array([float(value) for value in values])
         self.name = name
+        if isinstance(values, np.ndarray):
+            if values.ndim != 1:
+                raise ValueError("Values must be a one-dimensional array.")
+        elif isinstance(values, list):
+            values = np.array(values, dtype=np.float64)
+        else:
+            import pdb
+            pdb.set_trace()
+            raise TypeError("Values must be a list or a one-dimensional numpy array.")
+        self._values = values
+        self.id = self._values.tobytes()  # Unique identifier based on values
 
     @property
     def values(self):
-        return self._values
+        read_only_view = self._values.view()
+        read_only_view.setflags(write=False)  # Make the view read-only
+        return read_only_view
 
     @values.setter
-    def values(self, new_values):
-        raise AttributeError("Cannot modify the value")
+    def values(self):
+        raise AttributeError("Cannot modify the values of a Policy after it has been created.")
