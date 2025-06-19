@@ -759,6 +759,76 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         plt.savefig(f"{output_folder}/{filename}", bbox_inches="tight")
         plt.close(fig)
 
+    def plot_winset_boundary(self, current_policy, n_directions=360, n_halving_iterations=12, angle_offset=0):
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
+
+        # some settings
+        current_policy_name = (
+            "Current Policy" if current_policy.name is None else current_policy.name
+        )
+        undecided_name = "Undecided"
+        current_color = "orange"
+        boundary_color = "green"
+
+        # plotting all voters
+        voters_plot = ax.scatter(
+            self.voter_arr[:, 0],
+            self.voter_arr[:, 1],
+            c="black",
+            marker="o",
+        )
+        voters_plot.set_label("Voters")
+
+        # plotting policies
+        winset_boundary = self.generate_winset_boundary(current_policy, n_directions, n_halving_iterations, angle_offset)
+        winset_boundary_loop = np.vstack([winset_boundary, winset_boundary[0]])
+        ax.plot(
+            winset_boundary_loop[:, 0],
+            winset_boundary_loop[:, 1],
+            color=boundary_color,
+            label="Winset Boundary",
+            marker='o',
+            markersize=2,
+            linestyle='--'
+        )
+
+        current_policy_plot = ax.scatter(
+            [current_policy.values[0]],
+            [current_policy.values[1]],
+            color=current_color,
+            marker='o',
+            edgecolors="black",
+            s=100,
+        )
+        current_policy_plot.set_label(current_policy_name)
+
+        # title, labels, legend
+        desired_order = [
+            current_policy_name,
+            "Winset Boundary",
+            "Voters",
+        ]
+        handles, labels = plt.gca().get_legend_handles_labels()
+        label_to_handle = dict(zip(labels, handles))
+        ordered_handles = [
+            label_to_handle[label]
+            for label in desired_order
+            if label in label_to_handle
+        ]
+        plt.legend(
+            loc="upper left",
+            bbox_to_anchor=(1.05, 1),
+            borderaxespad=0.0,
+            handles=ordered_handles,
+            labels=desired_order,
+        )
+        plt.title(f"Approximate Boundary of the Set of Policies that Beats {current_policy_name}")
+        plt.xlabel(f"Position on {self.issue_1}")
+        plt.ylabel(f"Position on {self.issue_2}")
+        plt.grid(True)
+        plt.show()
+        plt.close()
 
 class ElectionDyanamicsMultiParty(ElectionDynamics):
     def __init__(self, voters: list[Voter], evaluation_function: callable):
