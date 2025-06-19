@@ -46,6 +46,7 @@ if __name__ == "__main__":
 
         # attempting to create a path from the moderate position to the extreme one
         # animating the path
+        animation_start_time = datetime.now()
         path = electorate.animate_mckelvey_schofield(
             p1,
             p2,
@@ -54,12 +55,15 @@ if __name__ == "__main__":
             output_folder=f"{multirun_folder}/animations", 
             filename=f"run_{run_num}",
             fps=1,
-            verbose=False
+            plot_verbose=False,
+            print_verbose=False,
         )
-        if len(path) == max_steps + 1 and path[max_steps].values != p2.values:
-            print(f"Simulation {run_num} failed to reach the goal policy.")
+        animation_end_time = datetime.now()
+        animation_run_time = (animation_end_time - animation_start_time).total_seconds()
+        if len(path) == max_steps + 1 and not np.allclose(path[max_steps].values, p2.values):
+            print(f"Simulation {run_num} ran for {animation_run_time:.2f} seconds and failed to reach the goal policy in {len(path)-1} steps.")
         else:
-            print(f"Simulation {run_num} successfully reached the goal policy in {len(path)-1} steps.")
+            print(f"Simulation {run_num} ran for {animation_run_time:.2f} seconds and successfully reached the goal policy in {len(path)-1} steps.")
             successful_runs += 1
 
         # plotting the path
@@ -93,8 +97,9 @@ if __name__ == "__main__":
         output_data_to_append = {
             'run_num': run_num,
             'num_steps': len(path)-1,  # Exclude the initial policy
+            'simulation_run_time': animation_run_time,
             'final_policy_values': path[-1].values,
-            'reached_goal_policy': path[-1].values == p2.values,
+            'reached_goal_policy': np.allclose(path[-1].values, p2.values),
             'path_taken': [p.values for p in path],
         }
         output_data.append(output_data_to_append)
