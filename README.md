@@ -29,6 +29,8 @@ This project is still very much underway. I hope to elaborate more on much of th
 
 sample_script.py provides a good outline for usage - simply edit as desired, then run `python sample_script.py` in your terminal. 
 
+To run many animations with saved results, use multirun.py.
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request.
