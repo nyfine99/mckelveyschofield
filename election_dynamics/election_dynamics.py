@@ -535,7 +535,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         original_policy,
         goal_policy,
         max_steps=50,
-        step_selection_function="mckelvey_schofield_greedy_with_adjustment_avg_dist",
+        step_selection_function="mckelvey_schofield_greedy_with_lookahead",
         output_folder="output",
         filename=f"output",
         plot_verbose=True,
