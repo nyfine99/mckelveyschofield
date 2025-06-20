@@ -448,10 +448,6 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
     def mckelvey_schofield_greedy_with_adjustment_avg_dist(
         self, current_policy, policy_path
     ) -> Policy:
-        """
-        Select the next policy using a greedy algorithm - choose the policy with the highest average distance
-        from all voters which beats the current policy.
-        """
         boundary_points = self.generate_winset_boundary(current_policy)
         boundary_points_voters_deltas = (
             boundary_points[:, None, :] - self.voter_arr[None, :, :]
@@ -492,6 +488,47 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         return Policy(
             poss_next_policy_values
         )  # return the policy with the maximum average distance or a forced movement policy
+    
+    def mckelvey_schofield_greedy_with_lookahead(self, current_policy) -> Policy:
+        boundary_points = self.generate_winset_boundary(current_policy)
+        boundary_points_voters_deltas = (
+            boundary_points[:, None, :] - self.voter_arr[None, :, :]
+        )  # shape (360, V, 2)
+        boundary_points_voters_dists = np.linalg.norm(
+            boundary_points_voters_deltas, axis=2
+        )  # shape (360, V)
+        avg_boundary_points_voters_dists = boundary_points_voters_dists.mean(axis=1)
+        arg_max = np.argmax(
+            avg_boundary_points_voters_dists
+        )  # index of the maximum average distance
+        curr_max = boundary_points[arg_max]
+
+        # performing lookahead
+        n_random_points_to_choose = 3
+        lookahead_directions = 60
+        lookahead_halving_iterations = 12  # should probably be the value used in first generate_winset_boundary call
+        random_indices = np.random.choice(boundary_points.shape[0], size=n_random_points_to_choose, replace=False)
+        sampled_points = boundary_points[random_indices]
+        points_to_examine = np.vstack([sampled_points, curr_max])
+        new_max_point = curr_max
+        new_max_val = avg_boundary_points_voters_dists[arg_max]
+        for point in points_to_examine:
+            new_boundary_points = self.generate_winset_boundary(Policy(point), lookahead_directions, lookahead_halving_iterations)
+            new_boundary_points_voters_deltas = (
+                new_boundary_points[:, None, :] - self.voter_arr[None, :, :]
+            )  # shape (360, V, 2)
+            new_boundary_points_voters_dists = np.linalg.norm(
+                new_boundary_points_voters_deltas, axis=2
+            )  # shape (360, V)
+            new_avg_boundary_points_voters_dists = new_boundary_points_voters_dists.mean(axis=1)
+            new_arg_max = np.argmax(
+                new_avg_boundary_points_voters_dists
+            )  # index of the maximum average distance
+            if new_avg_boundary_points_voters_dists[new_arg_max] > new_max_val:
+                new_max_point = point
+                new_max_val = new_avg_boundary_points_voters_dists[new_arg_max]
+
+        return Policy(new_max_point)  # return the policy with the maximum average distance
 
     def animate_mckelvey_schofield(
         self,
@@ -527,27 +564,17 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             plt.clf()  # Clear the current axes/figure
             fig.add_axes([0.1, 0.3, 0.55, 0.55])
             current_policy = policy_path[f_num]
-            if (
-                step_selection_function
-                == "mckelvey_schofield_greedy_with_adjustment_avg_dist"
-            ):
-                new_policy = (
-                    goal_policy
-                    if self.compare_policies(current_policy, goal_policy) == 1
-                    else self.mckelvey_schofield_greedy_with_adjustment_avg_dist(
-                        current_policy, policy_path
-                    )
-                )
-            elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
-                new_policy = (
-                    goal_policy
-                    if self.compare_policies(current_policy, goal_policy) == 1
-                    else self.mckelvey_schofield_greedy_avg_dist(current_policy)
-                )
+            if self.compare_policies(current_policy, goal_policy) == 1:
+                new_policy = goal_policy
             else:
-                raise ValueError(
-                    f"Unknown step selection function: {step_selection_function}"
-                )
+                if step_selection_function == "mckelvey_schofield_greedy_with_adjustment_avg_dist":
+                    new_policy = self.mckelvey_schofield_greedy_with_adjustment_avg_dist(current_policy, policy_path)
+                elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
+                    new_policy = self.mckelvey_schofield_greedy_avg_dist(current_policy)
+                elif step_selection_function == "mckelvey_schofield_greedy_with_lookahead":
+                    new_policy = self.mckelvey_schofield_greedy_with_lookahead(current_policy)
+                else:
+                    raise ValueError(f"Unknown step selection function: {step_selection_function}")
 
             # initial plot settings
             current_color = "green" if f_num % 2 == 0 else "orange"
@@ -767,7 +794,6 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         current_policy_name = (
             "Current Policy" if current_policy.name is None else current_policy.name
         )
-        undecided_name = "Undecided"
         current_color = "orange"
         boundary_color = "green"
 

@@ -51,11 +51,11 @@ if __name__ == "__main__":
             p1,
             p2,
             max_steps,
-            step_selection_function='mckelvey_schofield_greedy_with_adjustment_avg_dist',
+            step_selection_function='mckelvey_schofield_greedy_with_lookahead',
             output_folder=f"{multirun_folder}/animations", 
             filename=f"run_{run_num}",
             fps=1,
-            plot_verbose=False,
+            plot_verbose=True,
             print_verbose=False,
         )
         animation_end_time = datetime.now()
