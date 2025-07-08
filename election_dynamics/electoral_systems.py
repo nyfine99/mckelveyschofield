@@ -1,7 +1,5 @@
-from election_dynamics.election_dynamics import (
-    ElectionDynamicsTwoParty,
-    ElectionDynamicsTwoPartySimpleVoters,
-)
+from election_dynamics.election_dynamics_two_party import ElectionDynamicsTwoParty
+from election_dynamics.election_dynamics_two_party_simple_voters import ElectionDynamicsTwoPartySimpleVoters
 from utility_functions.evaluation_functions import status_quo_preference
 from voters.simple_voter import SimpleVoter
 from voters.voter import Voter
