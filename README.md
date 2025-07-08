@@ -10,7 +10,8 @@ This project is still very much underway. I hope to elaborate more on much of th
 
 ## Features
 
-- Modeling elections with simple voters (i.e. voters with a simple Euclidean distance utility function).
+- Modeling elections with Euclidean voters (i.e. voters with a simple Euclidean distance utility function).
+- Modeling elections with taxicab/L1 norm voters (i.e. voters with a taxicab distance utility function).
 - Finding a path, through a series of forced binary choices presented to voters, between any two policy positions in a two-dimensional plane.
 
 ## Installation
@@ -37,10 +38,9 @@ Contributions are welcome! Please open an issue or submit a pull request.
 
 ## Planned Additions
 
-- McKelvey-Schofield pathfinding capabilities for voters with taxicab distance utility functions.
-- McKelvey-Schofield pathfinding capabilities for voters with any concave utility functions.
+- McKelvey-Schofield pathfinding capabilities for voters with any concave (and even some non-concave) utility functions.
+- A justification as to the validity of the winset boundary algorithm.
 - Exploration and possible implementation of non-greedy McKelvey-Schofield pathfinding.
-- A justification as to the validity of the greedy McKelvey-Schofield pathfinding algorithm.
 - Work with ranked-choice voting capabilities/animation.
 
 ![pets_election](https://github.com/user-attachments/assets/66834c4c-b68e-4000-953d-8683cc284afe)
