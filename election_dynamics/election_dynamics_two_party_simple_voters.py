@@ -223,41 +223,23 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         return Policy(
             new_max_point
         )  # return the policy with the maximum average distance
-
-    def animate_mckelvey_schofield(
+    
+    def obtain_mckelvey_schofield_path(
         self,
-        original_policy,
-        goal_policy,
-        max_steps=50,
+        original_policy: Policy,
+        goal_policy: Policy,
+        max_steps: int = 50,
         step_selection_function="mckelvey_schofield_greedy_with_lookahead",
-        output_folder="output",
-        filename="output",
-        plot_verbose=True,
         print_verbose=False,
-        fps=0.5,
-    ):
-        # TODO: do path creation before animation step for performance
+    ) -> list[Policy]:
+        
         policy_path = [original_policy]  # Initialize the path with the original policy
-        fig = plt.figure()
 
-        original_policy_color = "blue"
-        original_policy_name = (
-            original_policy.name
-            if original_policy.name is not None
-            else "Original Policy"
-        )
-        goal_policy_color = "red"
-        goal_policy_name = (
-            goal_policy.name if goal_policy.name is not None else "Goal Policy"
-        )
-
-        def make_frame(f_num):
+        for policy_num in range(1,max_steps+1):
             if print_verbose:
-                print(f"Starting to create frame {f_num+1}")
+                print(f"Obtaining policy {policy_num} in path.")
 
-            plt.clf()  # Clear the current axes/figure
-            fig.add_axes([0.1, 0.3, 0.55, 0.55])
-            current_policy = policy_path[f_num]
+            current_policy = policy_path[-1]
             if self.compare_policies(current_policy, goal_policy) == 1:
                 new_policy = goal_policy
             else:
@@ -283,7 +265,57 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                     raise ValueError(
                         f"Unknown step selection function: {step_selection_function}"
                     )
+                
+            policy_path.append(new_policy)
+            if print_verbose:
+                print(f"Policy {policy_num} obtained.")
+            if new_policy == goal_policy:
+                break
 
+        if print_verbose:
+            if policy_num >= max_steps and not np.allclose(
+                policy_path[-1].values, goal_policy.values
+            ):
+                print(
+                    f"Could not reach the goal policy after {max_steps} steps."
+                )
+            else:
+                print("Reached the goal policy!")
+
+        return policy_path  # Return the path of policies from original to goal policy
+
+
+    def animate_mckelvey_schofield_path(
+        self,
+        original_policy,
+        goal_policy,
+        policy_path,
+        max_frames=1000,
+        output_folder="output",
+        filename="output",
+        plot_verbose=True,
+        fps=0.5,
+    ):
+        fig = plt.figure()
+
+        original_policy_color = "blue"
+        original_policy_name = (
+            original_policy.name
+            if original_policy.name is not None
+            else "Original Policy"
+        )
+        goal_policy_color = "red"
+        goal_policy_name = (
+            goal_policy.name if goal_policy.name is not None else "Goal Policy"
+        )
+
+        def make_frame(f_num):
+            plt.clf()  # Clear the current axes/figure
+            fig.add_axes([0.1, 0.3, 0.55, 0.55])
+
+            current_policy = policy_path[f_num]
+            new_policy = policy_path[f_num + 1]  # frame_gen avoids cases where f_num + 1 is out of bounds
+            
             # initial plot settings
             current_color = "green" if f_num % 2 == 0 else "orange"
             new_color = "orange" if f_num % 2 == 0 else "green"
@@ -295,7 +327,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             original_policy_opacity = 0.5
             goal_policy_opacity = 0.5
 
-            if f_num == 0:
+            if f_num == 0:  # this assumes that policy_path starts with the original policy
                 current_color = original_policy_color
                 current_policy_name = original_policy_name
                 original_policy_opacity = 1.0
@@ -378,8 +410,6 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 )
                 new_policy_plot.set_label(new_policy_name)
 
-            policy_path.append(new_policy)
-
             # title, labels, legend
             desired_order = [
                 original_policy_name,
@@ -426,26 +456,15 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                     fontsize=9,
                     color="black",
                 )
-            if print_verbose:
-                print(f"Frame {f_num+1} created")
 
         def frame_gen():
             f_num = 0
             while True:
-                # TODO: check if off by one at all in max_steps condition
                 if (
                     np.allclose(policy_path[f_num].values, goal_policy.values)
-                    or f_num >= max_steps
+                    or f_num >= max_frames
+                    or f_num >= len(policy_path) - 1
                 ):
-                    if print_verbose:
-                        if f_num >= max_steps and not np.allclose(
-                            policy_path[f_num].values, goal_policy.values
-                        ):
-                            print(
-                                f"Could not reach the goal policy after {max_steps} steps."
-                            )
-                        else:
-                            print("Reached the goal policy!")
                     break
                 yield f_num
                 f_num += 1
@@ -459,7 +478,6 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         # Save to mp4
         ani.save(f"{output_folder}/{filename}.mp4", writer="ffmpeg", fps=fps)
         plt.close(fig)
-        return policy_path
 
     def plot_path_average_distances(
         self,

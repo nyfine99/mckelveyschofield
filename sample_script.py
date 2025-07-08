@@ -28,7 +28,23 @@ if __name__ == "__main__":
 
     # plotting a path from the moderate position to the extreme one
     s_time = datetime.now()
-    path = electorate.animate_mckelvey_schofield(p1, p2, 50, step_selection_function="mckelvey_schofield_greedy_with_lookahead", filename="example_output", plot_verbose=True, print_verbose=True)
+    path = electorate.obtain_mckelvey_schofield_path(
+        p1, 
+        p2, 
+        50, 
+        step_selection_function="mckelvey_schofield_greedy_with_lookahead", 
+        print_verbose=True
+    )
     e_time = datetime.now()
-    print(f"Path animation completed in {e_time - s_time} seconds.")
+    print(f"Path creation completed in {e_time - s_time} seconds.")
+    s_time = datetime.now()
+    electorate.animate_mckelvey_schofield_path(
+        p1,
+        p2,
+        path,
+        filename="example_output", 
+        plot_verbose=True,
+    )
+    e_time = datetime.now()
+    print(f"Path plot completed in {e_time - s_time} seconds.")
     electorate.plot_mckelvey_schofield_path(p1, p2, path, save_file="output/example_output_path.png")

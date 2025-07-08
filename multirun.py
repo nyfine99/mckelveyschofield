@@ -11,7 +11,7 @@ from election_dynamics.electoral_systems import create_simple_electorate
 
 if __name__ == "__main__":
     
-    n_sims = 100  # Number of simulations to run
+    n_sims = 10  # Number of simulations to run
     max_steps = 50  # Maximum number of steps to take in each simulation
     
     # Initialize counters and data storage
@@ -47,22 +47,29 @@ if __name__ == "__main__":
         # attempting to create a path from the moderate position to the extreme one
         # animating the path
         animation_start_time = datetime.now()
-        path = electorate.animate_mckelvey_schofield(
+        path = electorate.obtain_mckelvey_schofield_path(
             p1,
             p2,
             max_steps,
             step_selection_function='mckelvey_schofield_greedy_with_lookahead',
-            output_folder=f"{multirun_folder}/animations", 
+            print_verbose=False,
+        )
+        electorate.animate_mckelvey_schofield_path(
+            p1,
+            p2,
+            path,
+            output_folder=f"{multirun_folder}/animations",
             filename=f"run_{run_num}",
             fps=1,
             plot_verbose=True,
-            print_verbose=False,
         )
         animation_end_time = datetime.now()
         animation_run_time = (animation_end_time - animation_start_time).total_seconds()
         if len(path) == max_steps + 1 and not np.allclose(path[max_steps].values, p2.values):
+            # may want a more accurate description here
             print(f"Simulation {run_num} ran for {animation_run_time:.2f} seconds and failed to reach the goal policy in {len(path)-1} steps.")
         else:
+            # may want a more accurate description here
             print(f"Simulation {run_num} ran for {animation_run_time:.2f} seconds and successfully reached the goal policy in {len(path)-1} steps.")
             successful_runs += 1
 
