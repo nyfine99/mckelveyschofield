@@ -10,9 +10,9 @@ from voters.simple_voter import SimpleVoter
 from policies.policy import Policy
 
 
-class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
+class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
     """
-    The ElectionDynamicsTwoPartySimpleVoters class. Voters is a list of SimpleVoters, while the evaluation_function
+    The ElectionDynamicsTwoPartyTaxicabVoters class. Voters is a list of TaxicabVoters, while the evaluation_function
     is fixed as status_quo_preference. An additional field, voter_arr, is a numpy array of the ideal policies of the
     voters, and is used to speed up calculations.
     """
@@ -48,7 +48,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         if key in self.calculated_utilities:
             utilities = self.calculated_utilities[key]
         else:
-            utilities = -np.linalg.norm(self.voter_arr - policy.values, axis=1)
+            utilities = -np.linalg.norm(self.voter_arr - policy.values, axis=1, ord=1)
             self.calculated_utilities[key] = utilities
         return utilities
 
@@ -62,7 +62,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         voters_policy_values = self.voter_arr
         current_policy_values = current_policy.values  # shape (2,)
         current_policy_voter_dists = np.linalg.norm(
-            voters_policy_values - current_policy_values, axis=1
+            voters_policy_values - current_policy_values, axis=1, ord=1
         )
 
         # set up directions (360 vectors in circle)
@@ -89,7 +89,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
 
             # broadcasted distance computation: (360, V), where V is the number of voters
             dists_to_mid = np.linalg.norm(
-                mid_points[:, None, :] - voters_policy_values[None, :, :], axis=2
+                mid_points[:, None, :] - voters_policy_values[None, :, :], axis=2, ord=1
             )
 
             # compare who wins per direction
@@ -117,7 +117,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             boundary_points[:, None, :] - self.voter_arr[None, :, :]
         )  # shape (360, V, 2)
         boundary_points_voters_dists = np.linalg.norm(
-            boundary_points_voters_deltas, axis=2
+            boundary_points_voters_deltas, axis=2, ord=1
         )  # shape (360, V)
         avg_boundary_points_voters_dists = boundary_points_voters_dists.mean(axis=1)
         arg_max = np.argmax(
@@ -135,7 +135,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             boundary_points[:, None, :] - self.voter_arr[None, :, :]
         )  # shape (360, V, 2)
         boundary_points_voters_dists = np.linalg.norm(
-            boundary_points_voters_deltas, axis=2
+            boundary_points_voters_deltas, axis=2, ord=1
         )  # shape (360, V)
         avg_boundary_points_voters_dists = boundary_points_voters_dists.mean(axis=1)
         arg_max = np.argmax(
@@ -148,7 +148,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         if len(policy_path) > 1:
             # policy_path_arr = np.stack([p.values for p in policy_path])
             policy_path_arr = np.array([p.values for p in policy_path])  # shape (N, D)
-            gaps = np.linalg.norm(policy_path_arr[1:] - policy_path_arr[:-1], axis=1)
+            gaps = np.linalg.norm(policy_path_arr[1:] - policy_path_arr[:-1], axis=1, ord=1)
             average_policy_gap = gaps.mean()
             gap_tolerance = 0.1
             forced_movement_factor = 0.5
@@ -159,7 +159,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 # minimum distance allowed between the current policy and the next policy; doing this to create significant movement
                 minimum_dist = average_policy_gap * forced_movement_factor
                 dists_to_current = np.linalg.norm(
-                    boundary_points - current_policy.values, axis=1
+                    boundary_points - current_policy.values, axis=1, ord=1
                 )
                 greater_than_minimum = boundary_points[dists_to_current >= minimum_dist]
                 if greater_than_minimum.size != 0:
@@ -177,7 +177,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             boundary_points[:, None, :] - self.voter_arr[None, :, :]
         )  # shape (360, V, 2)
         boundary_points_voters_dists = np.linalg.norm(
-            boundary_points_voters_deltas, axis=2
+            boundary_points_voters_deltas, axis=2, ord=1
         )  # shape (360, V)
         avg_boundary_points_voters_dists = boundary_points_voters_dists.mean(axis=1)
         arg_max = np.argmax(
@@ -204,7 +204,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                 new_boundary_points[:, None, :] - self.voter_arr[None, :, :]
             )  # shape (360, V, 2)
             new_boundary_points_voters_dists = np.linalg.norm(
-                new_boundary_points_voters_deltas, axis=2
+                new_boundary_points_voters_deltas, axis=2, ord=1
             )  # shape (360, V)
             new_avg_boundary_points_voters_dists = (
                 new_boundary_points_voters_dists.mean(axis=1)
@@ -310,11 +310,11 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             marker="o",
         )
 
-        title = "Average Distance Values for Policies Along the Path"
+        title = "Average Taxicab Distance Values for Policies Along the Path"
         plt.title(title)
         plt.xlim(right=max_steps)  # adjust the right leaving left unchanged
         plt.xlabel("Policy")
-        plt.ylabel("Average Distance from Voter Preferences")
+        plt.ylabel("Average Taxicab Distance from Voter Preferences")
         plt.savefig(f"{output_folder}/{filename}", bbox_inches="tight")
         plt.close(fig)
 

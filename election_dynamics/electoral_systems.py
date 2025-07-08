@@ -1,7 +1,9 @@
 from election_dynamics.election_dynamics_two_party import ElectionDynamicsTwoParty
 from election_dynamics.election_dynamics_two_party_simple_voters import ElectionDynamicsTwoPartySimpleVoters
+from election_dynamics.election_dynamics_two_party_taxicab_voters import ElectionDynamicsTwoPartyTaxicabVoters
 from utility_functions.evaluation_functions import status_quo_preference
 from voters.simple_voter import SimpleVoter
+from voters.taxicab_voter import TaxicabVoter
 from voters.voter import Voter
 
 
@@ -31,6 +33,21 @@ def create_simple_electorate(
     If an individual's preferences are tied, that individual does not vote.
     """
     return ElectionDynamicsTwoPartySimpleVoters(
+        voters, issue_1=issue_1, issue_2=issue_2
+    )
+
+
+def create_taxicab_electorate(
+    voters: list[TaxicabVoter],
+    issue_1: str = "Issue 1",
+    issue_2: str = "Issue 2",
+):
+    """
+    Creates an ElectionDynamicsTwoPartyTaxicabVoters where the evaluation function gives ties on
+    overall preferences to the original policy.
+    If an individual's preferences are tied, that individual does not vote.
+    """
+    return ElectionDynamicsTwoPartyTaxicabVoters(
         voters, issue_1=issue_1, issue_2=issue_2
     )
 
