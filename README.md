@@ -28,9 +28,19 @@ This project is still very much underway. I hope to elaborate more on much of th
 
 ## Usage
 
-sample_script.py provides a good outline for usage - simply edit as desired, then run `python sample_script.py` in your terminal. 
+All of the scripts in the `scripts` folder provide a good outline for usage. To run a script, for example, `sample_script.py`, run
 
-To run many animations with saved results, use multirun.py.
+`python -m scripts.sample_script` 
+
+in your terminal.
+
+To run many animations with saved results, use multirun.py. Run
+
+`python -m scripts.multirun`
+
+to use this script.
+
+Note: for scripts which output images and/or animations, you will need to create an `output` folder in advance.
 
 ## Contributing
 
