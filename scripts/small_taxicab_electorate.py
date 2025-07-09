@@ -1,11 +1,10 @@
-from random import gauss, seed
-import numpy as np
+from random import seed
 from datetime import datetime
 
 from policies.policy import Policy
 from voters.simple_voter import SimpleVoter
 from voters.taxicab_voter import TaxicabVoter
-from election_dynamics.electoral_systems import create_simple_electorate, create_taxicab_electorate
+from election_dynamics.electoral_systems import create_taxicab_electorate
 
 if __name__ == "__main__":
     # defining policies
@@ -31,9 +30,9 @@ if __name__ == "__main__":
     # plotting a path from the centrist position to the extreme one
     s_time = datetime.now()
     path = electorate.obtain_mckelvey_schofield_path(
-        p1, 
-        p2, 
-        300, 
+        p1,
+        p2,
+        50,
         step_selection_function="mckelvey_schofield_greedy_with_lookahead", 
         print_verbose=True
     )
