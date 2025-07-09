@@ -265,7 +265,8 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
                             f"Unknown step selection function: {step_selection_function}"
                         )
                 except ValueError as e:
-                    print(f"ValueError({e}) encountered with policy {current_policy.values}, returning current path.")
+                    print(f"ValueError({e}) encountered with policy {current_policy.values} at step {policy_num}.")
+                    print("Returning current path.")
                     break
                 
             policy_path.append(new_policy)
