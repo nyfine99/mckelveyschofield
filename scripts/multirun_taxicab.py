@@ -30,6 +30,7 @@ if __name__ == "__main__":
     for run_num in range(1,n_sims+1):
         seed_val = run_num  # Using run_num as the seed for reproducibility
         seed(seed_val)
+        np.random.seed(seed_val)
         print(f"Running simulation {run_num} of {n_sims}...")
 
         # defining voters

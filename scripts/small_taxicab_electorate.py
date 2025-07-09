@@ -1,4 +1,5 @@
 from random import seed
+import numpy as np
 from datetime import datetime
 
 from policies.policy import Policy
@@ -7,12 +8,16 @@ from voters.taxicab_voter import TaxicabVoter
 from election_dynamics.electoral_systems import create_taxicab_electorate
 
 if __name__ == "__main__":
+    # seeds for reproducibility
+    seed_val = 42
+    seed(seed_val)
+    np.random.seed(seed_val)
+
     # defining policies
     p1 = Policy([50,50], "Centrism") # more moderate
     p2 = Policy([90,90], "Extremism") # more extreme
 
     # defining voters
-    seed(42)  # For reproducibility
     voters = []
     voters.append(TaxicabVoter(Policy([40,45])))
     voters.append(TaxicabVoter(Policy([50,60])))

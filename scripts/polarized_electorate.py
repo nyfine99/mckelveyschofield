@@ -7,12 +7,16 @@ from voters.simple_voter import SimpleVoter
 from election_dynamics.electoral_systems import create_simple_electorate
 
 if __name__ == "__main__":
+    # seeds for reproducibility
+    seed_val = 42
+    seed(seed_val)
+    np.random.seed(seed_val)
+    
     # defining policies
     p1 = Policy([50,50], "Centrism") # more moderate
     p2 = Policy([80,90], "Extremism") # more extreme
 
     # defining voters
-    seed(42)  # For reproducibility
     voters = []
     for i in range(50):
         voters.append(SimpleVoter(Policy(np.array([gauss(25,5),gauss(55,3)]))))
