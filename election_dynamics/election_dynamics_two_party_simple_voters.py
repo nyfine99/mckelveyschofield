@@ -105,6 +105,8 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         # ... but must filter out the current policy itself
         mask = np.all(np.isclose(inner_bounds, current_policy.values), axis=1)
         filtered_boundary_points = inner_bounds[~mask]
+        if len(filtered_boundary_points) == 0:
+            raise ValueError("The winset boundary could not be found, and the current policy appears optimal!")
         return filtered_boundary_points
 
     def mckelvey_schofield_greedy_avg_dist(self, current_policy) -> Policy:
@@ -239,28 +241,32 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             if self.compare_policies(current_policy, goal_policy) == 1:
                 new_policy = goal_policy
             else:
-                if (
-                    step_selection_function
-                    == "mckelvey_schofield_greedy_with_adjustment_avg_dist"
-                ):
-                    new_policy = (
-                        self.mckelvey_schofield_greedy_with_adjustment_avg_dist(
-                            current_policy, policy_path
+                try:
+                    if (
+                        step_selection_function
+                        == "mckelvey_schofield_greedy_with_adjustment_avg_dist"
+                    ):
+                        new_policy = (
+                            self.mckelvey_schofield_greedy_with_adjustment_avg_dist(
+                                current_policy, policy_path
+                            )
                         )
-                    )
-                elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
-                    new_policy = self.mckelvey_schofield_greedy_avg_dist(current_policy)
-                elif (
-                    step_selection_function
-                    == "mckelvey_schofield_greedy_with_lookahead"
-                ):
-                    new_policy = self.mckelvey_schofield_greedy_with_lookahead(
-                        current_policy
-                    )
-                else:
-                    raise ValueError(
-                        f"Unknown step selection function: {step_selection_function}"
-                    )
+                    elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
+                        new_policy = self.mckelvey_schofield_greedy_avg_dist(current_policy)
+                    elif (
+                        step_selection_function
+                        == "mckelvey_schofield_greedy_with_lookahead"
+                    ):
+                        new_policy = self.mckelvey_schofield_greedy_with_lookahead(
+                            current_policy
+                        )
+                    else:
+                        raise ValueError(
+                            f"Unknown step selection function: {step_selection_function}"
+                        )
+                except ValueError as e:
+                    print(f"ValueError({e}) encountered with policy {current_policy.values}, returning current path.")
+                    break
                 
             policy_path.append(new_policy)
             if print_verbose:
@@ -386,7 +392,7 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             labels=desired_order,
         )
         plt.title(
-            f"Approximate Boundary of the Set of Policies that Beats {current_policy_name}"
+            f"Approximate Boundary of the Set of Policies that Beat {current_policy_name}"
         )
         plt.xlabel(f"Position on {self.issue_1}")
         plt.ylabel(f"Position on {self.issue_2}")
