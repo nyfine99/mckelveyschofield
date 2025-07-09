@@ -20,7 +20,7 @@ if __name__ == "__main__":
     output_data = []
 
     # setting up directories for output
-    multirun_folder = f'output/multirun_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'  # Base folder for multirun outputs
+    multirun_folder = f'output/multirun_taxicab_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'  # Base folder for multirun outputs
     if not os.path.exists(multirun_folder):
         os.makedirs(multirun_folder)
         os.makedirs(f"{multirun_folder}/animations")
