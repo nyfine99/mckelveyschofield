@@ -11,7 +11,7 @@ from election_dynamics.electoral_systems import create_simple_electorate
 
 if __name__ == "__main__":
     
-    n_sims = 10  # Number of simulations to run
+    n_sims = 100  # Number of simulations to run
     max_steps = 50  # Maximum number of steps to take in each simulation
     
     # Initialize counters and data storage
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     output_data = []
 
     # setting up directories for output
-    multirun_folder = f'output/multirun_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'  # Base folder for multirun outputs
+    multirun_folder = f'output/multirun_euclidean_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'  # Base folder for multirun outputs
     if not os.path.exists(multirun_folder):
         os.makedirs(multirun_folder)
         os.makedirs(f"{multirun_folder}/animations")
@@ -32,14 +32,18 @@ if __name__ == "__main__":
         seed(seed_val)
         print(f"Running simulation {run_num} of {n_sims}...")
 
-        # defining policies
-        p1 = Policy([50,50], "Centrism")  # more moderate
-        p2 = Policy([80,90], "Extremism")  # more extreme
-
         # defining voters
         voters = []
         for i in range(100):
             voters.append(SimpleVoter(Policy([gauss(50,15),gauss(50,10)])))
+
+        # defining policies
+        average_policy_values = [
+            sum([v.ideal_policy.values[0] for v in voters])/100.0, 
+            sum([v.ideal_policy.values[1] for v in voters])/100.0
+        ]
+        p1 = Policy(average_policy_values, "Centrism")  # more moderate
+        p2 = Policy([80,90], "Extremism")  # more extreme
 
         # defining electorate
         electorate = create_simple_electorate(voters, "Example Issue 1", "Example Issue 2")
@@ -65,7 +69,7 @@ if __name__ == "__main__":
         )
         animation_end_time = datetime.now()
         animation_run_time = (animation_end_time - animation_start_time).total_seconds()
-        if len(path) == max_steps + 1 and not np.allclose(path[max_steps].values, p2.values):
+        if not np.allclose(path[-1].values, p2.values):
             # may want a more accurate description here
             print(f"Simulation {run_num} ran for {animation_run_time:.2f} seconds and failed to reach the goal policy in {len(path)-1} steps.")
         else:
