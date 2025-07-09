@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # defining voters
     seed(42)  # For reproducibility
     voters = []
-    for i in range(100):
+    for i in range(250):
         voters.append(SimpleVoter(Policy(np.array([uniform(10,90), uniform(30,70)]))))
 
     # defining electorate
