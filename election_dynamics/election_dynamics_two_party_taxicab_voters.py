@@ -57,7 +57,6 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         current_policy: Policy,
         n_directions=360,
         n_halving_iterations=12,
-        angle_offset: float = 0.0,
     ) -> np.ndarray:
         voters_policy_values = self.voter_arr
         current_policy_values = current_policy.values  # shape (2,)
@@ -65,23 +64,52 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
             voters_policy_values - current_policy_values, axis=1, ord=1
         )
 
-        # set up directions (360 vectors in circle)
-        angles = np.linspace(
-            angle_offset, 2 * np.pi + angle_offset, n_directions, endpoint=False
-        )
-        directions = np.stack(
-            [np.sin(angles), np.cos(angles)], axis=1
-        )  # shape (360, 2)
-
         # set up initial inner and outer bounds for winset boundary in each direction (shape: (360, 2))
         inner_bounds = np.tile(
             current_policy_values, (n_directions, 1)
         )  # each row is the current policy
         max_dist = np.max(current_policy_voter_dists)
+
         # outer bounds of preferable policies will be at most twice the maximum distance
         # from the current policy to any voter's ideal policy
-        max_r = 2.0 * max_dist
-        outer_bounds = inner_bounds + max_r * directions
+        # constructing a diamond which reflects this
+        radius =  2.0 * max_dist
+        cx, cy = current_policy_values[0], current_policy_values[1]
+        total = 4 * radius
+
+        # positions along the diamond perimeter (0 to total)
+        t = np.linspace(0, total, n_directions, endpoint=False).astype(float)
+
+        # Allocate x and y arrays
+        x = np.zeros(n_directions, dtype=float)
+        y = np.zeros(n_directions, dtype=float)
+
+        # 4 segments of the diamond
+        mask0 = t < radius
+        mask1 = (t >= radius) & (t < 2 * radius)
+        mask2 = (t >= 2 * radius) & (t < 3 * radius)
+        mask3 = t >= 3 * radius
+
+        # Segment 0: up-right
+        x[mask0] = cx + t[mask0]
+        y[mask0] = cy + (radius - t[mask0])
+
+        # Segment 1: down-right
+        dt = t[mask1] - radius
+        x[mask1] = cx + (radius - dt)
+        y[mask1] = cy - dt
+
+        # Segment 2: down-left
+        dt = t[mask2] - 2 * radius
+        x[mask2] = cx - dt
+        y[mask2] = cy - (radius - dt)
+
+        # Segment 3: up-left
+        dt = t[mask3] - 3 * radius
+        x[mask3] = cx - (radius - dt)
+        y[mask3] = cy + dt
+
+        outer_bounds = np.stack((x, y), axis=1)
 
         # vectorized binary search
         for _ in range(n_halving_iterations):
@@ -105,6 +133,9 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         # ... but must filter out the current policy itself
         mask = np.all(np.isclose(inner_bounds, current_policy.values), axis=1)
         filtered_boundary_points = inner_bounds[~mask]
+
+        if len(filtered_boundary_points) == 0:
+            raise ValueError("The winset boundary could not be found, and the current policy appears optimal!")
         return filtered_boundary_points
 
     def mckelvey_schofield_greedy_avg_dist(self, current_policy) -> Policy:
@@ -239,28 +270,32 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
             if self.compare_policies(current_policy, goal_policy) == 1:
                 new_policy = goal_policy
             else:
-                if (
-                    step_selection_function
-                    == "mckelvey_schofield_greedy_with_adjustment_avg_dist"
-                ):
-                    new_policy = (
-                        self.mckelvey_schofield_greedy_with_adjustment_avg_dist(
-                            current_policy, policy_path
+                try:
+                    if (
+                        step_selection_function
+                        == "mckelvey_schofield_greedy_with_adjustment_avg_dist"
+                    ):
+                        new_policy = (
+                            self.mckelvey_schofield_greedy_with_adjustment_avg_dist(
+                                current_policy, policy_path
+                            )
                         )
-                    )
-                elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
-                    new_policy = self.mckelvey_schofield_greedy_avg_dist(current_policy)
-                elif (
-                    step_selection_function
-                    == "mckelvey_schofield_greedy_with_lookahead"
-                ):
-                    new_policy = self.mckelvey_schofield_greedy_with_lookahead(
-                        current_policy
-                    )
-                else:
-                    raise ValueError(
-                        f"Unknown step selection function: {step_selection_function}"
-                    )
+                    elif step_selection_function == "mckelvey_schofield_greedy_avg_dist":
+                        new_policy = self.mckelvey_schofield_greedy_avg_dist(current_policy)
+                    elif (
+                        step_selection_function
+                        == "mckelvey_schofield_greedy_with_lookahead"
+                    ):
+                        new_policy = self.mckelvey_schofield_greedy_with_lookahead(
+                            current_policy
+                        )
+                    else:
+                        raise ValueError(
+                            f"Unknown step selection function: {step_selection_function}"
+                        )
+                except ValueError as e:
+                    print(f"ValueError({e}) encountered with policy {current_policy.values}, returning current path.")
+                    break
                 
             policy_path.append(new_policy)
             if print_verbose:
@@ -283,7 +318,7 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
     def plot_path_average_distances(
         self,
         path: list[Policy],
-        max_steps: int,
+        max_steps: int=50,
         output_folder="output",
         filename="output",
     ):
@@ -319,7 +354,7 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         plt.close(fig)
 
     def plot_winset_boundary(
-        self, current_policy, n_directions=360, n_halving_iterations=12, angle_offset=0
+        self, current_policy, n_directions=360, n_halving_iterations=12
     ):
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
@@ -342,7 +377,7 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
 
         # plotting policies
         winset_boundary = self.generate_winset_boundary(
-            current_policy, n_directions, n_halving_iterations, angle_offset
+            current_policy, n_directions, n_halving_iterations
         )
         winset_boundary_loop = np.vstack([winset_boundary, winset_boundary[0]])
         ax.plot(
@@ -386,7 +421,7 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
             labels=desired_order,
         )
         plt.title(
-            f"Approximate Boundary of the Set of Policies that Beats {current_policy_name}"
+            f"Approximate Boundary of the Set of Policies that Beat {current_policy_name}"
         )
         plt.xlabel(f"Position on {self.issue_1}")
         plt.ylabel(f"Position on {self.issue_2}")
