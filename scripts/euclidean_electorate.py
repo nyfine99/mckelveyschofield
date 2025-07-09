@@ -42,12 +42,12 @@ if __name__ == "__main__":
         p1,
         p2,
         path,
-        filename="example_output", 
+        filename="euclidean_electorate_animation", 
         plot_verbose=True,
     )
     e_time = datetime.now()
     print(f"Path animation completed in {e_time - s_time} seconds.")
     s_time = datetime.now()
-    electorate.plot_mckelvey_schofield_path(p1, p2, path, save_file="output/example_output_path.png")
+    electorate.plot_mckelvey_schofield_path(p1, p2, path, save_file="output/euclidean_electorate_path.png")
     e_time = datetime.now()
     print(f"Path plot completed in {e_time - s_time} seconds.")

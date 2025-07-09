@@ -28,9 +28,9 @@ This project is still very much underway. I hope to elaborate more on much of th
 
 ## Usage
 
-All of the scripts in the `scripts` folder provide a good outline for usage. To run a script, for example, `sample_script.py`, run
+All of the scripts in the `scripts` folder provide a good outline for usage. To run a script, for example, `euclidean_electorate.py`, run
 
-`python -m scripts.sample_script` 
+`python -m scripts.euclidean_electorate` 
 
 in your terminal.
 
