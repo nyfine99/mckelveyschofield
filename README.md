@@ -34,11 +34,11 @@ All of the scripts in the `scripts` folder provide a good outline for usage. To 
 
 in your terminal.
 
-To run many animations with saved results, use multirun.py. Run
+To run many animations with saved results, use one of the multirun files. For example, to run `multirun_euclidean.py`, run
 
-`python -m scripts.multirun`
+`python -m scripts.multirun_euclidean`
 
-to use this script.
+in your terminal.
 
 Note: for scripts which output images and/or animations, you will need to create an `output` folder in advance.
 
