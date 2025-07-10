@@ -10,9 +10,16 @@ This project is still very much underway. I hope to elaborate more on much of th
 
 ## Features
 
-- Modeling elections with Euclidean voters (i.e. voters with a simple Euclidean distance utility function).
-- Modeling elections with taxicab/L1 norm voters (i.e. voters with a taxicab distance utility function).
-- Finding a path, through a series of forced binary choices presented to voters, between any two policy positions in a two-dimensional plane.
+Assuming:
+- Voters and candidates/policies are represented as points in an n-dimensional Euclidean policy space (typically 2D).
+- Voters have full knowledge of their own preferences and the positions of all candidates/policies.
+- Voters vote sincerely for the option that gives them the highest utility.
+
+This project supports:
+- Modeling elections with customizable voter types (currently assuming rational voters with simple Manhattan or Euclidean distance-based utility).
+- Identifying the set of policies that can defeat a given or incumbent policy via majority rule.
+- Finding a path, through a sequence of forced binary choices presented to voters, between any two policy positions in a two-dimensional plane (as McKelvey-Schofield guarantees possible, in most cases).
+- Applying these tools to real-world voter data (though not necessarily for real-world conclusions, given the simplified assumptions of the model; rather, to explore its implications and structure).
 
 ## Installation
 
@@ -48,7 +55,7 @@ Contributions are welcome! Please open an issue or submit a pull request.
 
 ## Planned Additions
 
-- McKelvey-Schofield pathfinding capabilities for voters with any concave (and even some non-concave) utility functions.
+- McKelvey-Schofield pathfinding capabilities for voters with any weighted L1 or L2 norm utility functions.
 - A justification as to the validity of the winset boundary algorithm.
 - Exploration and possible implementation of non-greedy McKelvey-Schofield pathfinding.
 - Work with ranked-choice voting capabilities/animation.
