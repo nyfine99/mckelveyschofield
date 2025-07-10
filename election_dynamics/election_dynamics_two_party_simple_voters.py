@@ -358,8 +358,9 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
             color=boundary_color,
             label="Winset Boundary",
             marker="o",
-            markersize=2,
+            markersize=4,
             linestyle="--",
+            linewidth=3,
         )
 
         current_policy_plot = ax.scatter(
