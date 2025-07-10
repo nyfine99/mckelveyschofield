@@ -41,8 +41,6 @@ if __name__ == "__main__":
     )
     e_time = datetime.now()
     print(f"Path creation completed in {e_time - s_time} seconds.")
-    import pdb
-    pdb.set_trace()
     s_time = datetime.now()
     electorate.animate_mckelvey_schofield_path(
         p1,

@@ -1,4 +1,6 @@
 *.mp4
 *.png
 *.pyc
-*.csv
+input_data.csv
+summary_data.csv
+output_data.csv
