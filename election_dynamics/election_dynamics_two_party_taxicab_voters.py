@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 import math
 import numpy as np
 import random
@@ -391,6 +392,8 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
             linestyle="--",
             linewidth=3,
         )
+        poly = Polygon(winset_boundary_loop, closed=True, facecolor=boundary_color, alpha=0.25)
+        ax.add_patch(poly)
 
         current_policy_plot = ax.scatter(
             [current_policy.values[0]],
@@ -423,7 +426,7 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
             labels=desired_order,
         )
         plt.title(
-            f"Approximate Boundary of the Set of Policies that Beat {current_policy_name}"
+            f"Approximate Set of Policies that Beat {current_policy_name}"
         )
         plt.xlabel(f"Position on {self.issue_1}")
         plt.ylabel(f"Position on {self.issue_2}")
