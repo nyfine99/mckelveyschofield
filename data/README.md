@@ -12,8 +12,7 @@ The original data was obtained from:
 
 **Echelon Insights**
 [Full June 2025 Omnibus Multi Party and Quadrants](https://echeloninsights.com/in-the-news/june-2025-political-quadrants/)
-[Their data visualization](https://public.tableau.com/app/profile/echelon.insights/viz/shared/5WXTJ44FG)
-Accessed on: 2025-07-09
+(Accessed on: 2025-07-09)
 
 ## License & Use
 
