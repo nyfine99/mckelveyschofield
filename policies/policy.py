@@ -20,8 +20,6 @@ class Policy():
         elif isinstance(values, list):
             values = np.array(values, dtype=np.float64)
         else:
-            import pdb
-            pdb.set_trace()
             raise TypeError("Values must be a list or a one-dimensional numpy array.")
         self._values = values
         self.id = self._values.tobytes()  # Unique identifier based on values
