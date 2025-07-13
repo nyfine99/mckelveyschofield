@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from election_dynamics.election_dynamics_two_party import ElectionDynamicsTwoParty
 from election_dynamics.electoral_systems import create_simple_electorate
-from utility_functions.evaluation_functions import status_quo_preference
 from voters.simple_voter import SimpleVoter
 from voters.voter import Policy
 
