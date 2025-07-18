@@ -34,6 +34,7 @@ This project supports:
 3. Install dependencies
    ```
    pip install matplotlib
+   pip install numba
    pip install numpy
    pip install ordered_set
    pip install pandas

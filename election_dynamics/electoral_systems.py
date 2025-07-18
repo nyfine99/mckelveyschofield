@@ -1,4 +1,4 @@
-from election_dynamics.election_dynamics_multi_party import ElectionDynamicsMultiParty
+from election_dynamics.election_dynamics_multi_party_simple_voters import ElectionDynamicsMultiPartySimpleVoters
 from election_dynamics.election_dynamics_two_party import ElectionDynamicsTwoParty
 from election_dynamics.election_dynamics_two_party_simple_voters import ElectionDynamicsTwoPartySimpleVoters
 from election_dynamics.election_dynamics_two_party_taxicab_voters import ElectionDynamicsTwoPartyTaxicabVoters
@@ -58,6 +58,6 @@ def create_rcv_electorate(
     issue_1: str = "Issue 1",
     issue_2: str = "Issue 2",
 ):
-    return ElectionDynamicsMultiParty(
-        voters, ranked_choice_preference, None, issue_1=issue_1, issue_2=issue_2,
+    return ElectionDynamicsMultiPartySimpleVoters(
+        voters, issue_1=issue_1, issue_2=issue_2,
     )

@@ -92,10 +92,11 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                 )
                 curr_name = policy_names[k]
                 voters_plot.set_label(f"{curr_name} Voters")
+                
                 policy_plot = ax.scatter(
                     [policies[k].values[0]],
                     [policies[k].values[1]],
-                    color=all_colors[k],
+                    color=policy_colors[k],
                     marker="o",
                     edgecolors="black",
                     s=200,
@@ -139,7 +140,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                 second_policy_name = policy_names[second_policy_idx]
                 second_policy_votes = len(sorted_items[1][1])
                 if len(sorted_items) > 2:
-                    description_string += f"\n{second_policy_name} is in second place, as the first choice of {top_policy_votes} voters."
+                    description_string += f"\n{second_policy_name} is in second place, as the first choice of {second_policy_votes} voters."
                 else:
                     # this is the last place candidate, phrase accordingly
                     description_string += f"\n{second_policy_name} trails, as the first choice of {second_policy_votes} voters."
@@ -161,7 +162,3 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
 
         plt.grid(True)
         plt.show()
-
-    def animate_election():
-        # NOTE: this function assumes that evaluation is rcv; is that a fair assumption?
-        pass
