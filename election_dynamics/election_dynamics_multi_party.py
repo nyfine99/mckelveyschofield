@@ -45,7 +45,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         """
         return [voter.rank_policies_by_utility_index_preference(policies) for voter in self.voters]
 
-    def plot_election_first_round(
+    def plot_voters_first_choices(
         self, policies: list[Policy], verbose: bool = True
     ):
         # initialize the figure and axes
@@ -118,7 +118,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             handles=ordered_handles,
             labels=desired_order,
         )
-        title = f"Ranked-Choice Voting Election Results:\n" + " vs. ".join(policy_names[:5])
+        title = f"Voters' First Choices:\n" + " vs. ".join(policy_names[:5])
         if len(policy_names) > 5:
             title += " vs. ..."
         plt.title(title)
@@ -127,30 +127,29 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
 
         if verbose:
             # sorting voters_by_vote by first round vote count
+            description_string = "In first-choice selections"
             sorted_items = sorted(voters_by_vote.items(), key=lambda item: len(item[1]), reverse=True)
-
-            description_string = "In the first round of voting:"
             top_policy_idx = sorted_items[0][0]
             top_policy_name = policy_names[top_policy_idx]
             top_policy_votes = len(sorted_items[0][1])
-            description_string += f"\n{top_policy_name} leads with {top_policy_votes} votes"
+            description_string = f"\n{top_policy_name} leads, as the first choice of {top_policy_votes} voters."
 
             if len(sorted_items) > 1:
                 second_policy_idx = sorted_items[1][0]
                 second_policy_name = policy_names[second_policy_idx]
                 second_policy_votes = len(sorted_items[1][1])
                 if len(sorted_items) > 2:
-                    description_string += f",\n{second_policy_name} is in second with {second_policy_votes} votes,"
+                    description_string += f"\n{second_policy_name} is in second place, as the first choice of {top_policy_votes} voters."
                 else:
-                    # the is the last place candidate, phrase accordingly
-                    description_string += f"\nand {second_policy_name} trails with {second_policy_votes} votes."
+                    # this is the last place candidate, phrase accordingly
+                    description_string += f"\n{second_policy_name} trails, as the first choice of {second_policy_votes} voters."
 
             if len(sorted_items) > 2:
                 last_policy_idx = sorted_items[-1][0]
                 last_policy_name = policy_names[last_policy_idx]
                 last_policy_votes = len(sorted_items[-1][1])
                 description_string += "\n..."
-                description_string += f"\nand {last_policy_name} is in last place with {last_policy_votes} votes."
+                description_string += f"\n{last_policy_name} is in last place, as the first choice of {last_policy_votes} voters."
 
             fig.text(
                 0.1,
@@ -164,4 +163,5 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         plt.show()
 
     def animate_election():
+        # NOTE: this function assumes that evaluation is rcv; is that a fair assumption?
         pass

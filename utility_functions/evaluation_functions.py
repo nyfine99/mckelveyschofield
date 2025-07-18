@@ -65,7 +65,7 @@ def ranked_choice_preference(ballots: list[list[int]]) -> int:
         if len(lowest) > 1:
             original_counts = {c: original_first_round_counts[c] for c in lowest}
             min_original = min(original_counts.values())
-            lowest = [c for c in lowest if original_counts[c] == min_original)]
+            lowest = [c for c in lowest if original_counts[c] == min_original]
 
         # Tiebreak 2: smallest index
         to_eliminate = min(lowest)
