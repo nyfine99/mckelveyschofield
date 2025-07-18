@@ -32,6 +32,12 @@ This project supports:
    cd mckelveyschofield
    ```
 3. Install dependencies
+   ```
+   pip install matplotlib
+   pip install numpy
+   pip install ordered_set
+   pip install pandas
+   ```
 
 ## Usage
 
