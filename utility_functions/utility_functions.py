@@ -27,7 +27,7 @@ def neg_taxicab_distance(ideal_policy: Policy, proposed_policy: Policy) -> float
     Returns:
         float: the utility of the proposed policy to the voter given the ideal policy.
     """
-    return -np.linalg.norm(ideal_policy - proposed_policy, 1)
+    return -np.linalg.norm(ideal_policy.values-proposed_policy.values, 1)
 
 
 def capped_neg_distance(dist_max: float) -> callable:
