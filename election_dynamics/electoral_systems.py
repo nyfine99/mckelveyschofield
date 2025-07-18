@@ -1,7 +1,8 @@
+from election_dynamics.election_dynamics_multi_party import ElectionDynamicsMultiParty
 from election_dynamics.election_dynamics_two_party import ElectionDynamicsTwoParty
 from election_dynamics.election_dynamics_two_party_simple_voters import ElectionDynamicsTwoPartySimpleVoters
 from election_dynamics.election_dynamics_two_party_taxicab_voters import ElectionDynamicsTwoPartyTaxicabVoters
-from utility_functions.evaluation_functions import status_quo_preference
+from utility_functions.evaluation_functions import ranked_choice_preference, status_quo_preference
 from voters.simple_voter import SimpleVoter
 from voters.taxicab_voter import TaxicabVoter
 from voters.voter import Voter
@@ -52,5 +53,11 @@ def create_taxicab_electorate(
     )
 
 
-def create_ranked_choice_voting():
-    pass
+def create_rcv_electorate(
+    voters: list[SimpleVoter],
+    issue_1: str = "Issue 1",
+    issue_2: str = "Issue 2",
+):
+    return ElectionDynamicsMultiParty(
+        voters, ranked_choice_preference, None, issue_1=issue_1, issue_2=issue_2,
+    )
