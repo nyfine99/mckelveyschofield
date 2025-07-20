@@ -1,9 +1,9 @@
 from random import gauss, seed
 import numpy as np
 
+from election_dynamics.electoral_systems import create_rcv_electorate
 from policies.policy import Policy
 from voters.simple_voter import SimpleVoter
-from election_dynamics.electoral_systems import create_rcv_electorate
 
 if __name__ == "__main__":
     # seeds for reproducibility
