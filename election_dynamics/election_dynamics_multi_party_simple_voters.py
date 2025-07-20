@@ -152,17 +152,38 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
                 for label in desired_order
                 if label in label_to_handle
             ]
+            # reformatting ordered_labels to be shorter if too long
+            formatted_ordered_labels = []
+            for label in ordered_labels:
+                if len(label) > 18:
+                    formatted_ordered_labels.append(label[:18] + "...")
+                else:
+                    formatted_ordered_labels.append(label)
+
             plt.legend(
                 loc="upper left",
                 bbox_to_anchor=(1.05, 1),
                 borderaxespad=0.0,
                 handles=ordered_handles,
-                labels=ordered_labels,
+                labels=formatted_ordered_labels,
             )
-            title = f"Ranked-choice Voting Round {f_num+1}\n" + " vs. ".join(policy_names[:3])
-            if len(policy_names) > 3:
-                title += " vs. ..."
+
+            title = f"Ranked-choice Voting Round {f_num+1}\n"
+            too_many_policies = False
+            policy_added = False
+            for policy_name in policy_names:
+                if len(title) + len(str(policy_name)) > 80:
+                    too_many_policies = True
+                    break
+                else:
+                    title += f"{policy_name} vs. "
+                    policy_added = True
+            if too_many_policies and policy_added:
+                title += "..."
+            elif policy_added:
+                title = title[:-5]
             plt.title(title)
+
             plt.xlabel(f"Position on {self.issue_1}")
             plt.ylabel(f"Position on {self.issue_2}")
 
@@ -293,7 +314,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
 
         # draw round labels at the top
         for r in range(num_rounds):
-            ax.text(r, total_votes + total_votes*0.04, f"Round {r+1}", ha='center', va='top', fontsize=12, fontweight='bold')
+            ax.text(r, total_votes + total_votes*0.04, f"Round {r+1}", ha='center', va='top', fontsize=11, fontweight='bold')
 
         # draw candidate row labels on the left
         for c in range(num_candidates):
