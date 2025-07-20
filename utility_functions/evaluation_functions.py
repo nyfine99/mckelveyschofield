@@ -1,6 +1,5 @@
 import numpy as np
 from numba import njit, int32, boolean
-from collections import Counter
 
 def status_quo_preference(counts: list[int]):
     """
@@ -18,7 +17,7 @@ def tiebreak_status_quo_preference():
     return 0
 
 
-def ranked_choice_preference(preferences: np.ndarray) -> int:
+def ranked_choice_preference(preferences: np.ndarray, output_vote_counts: bool = False):
     """
     Optimized Ranked Choice Voting (RCV) from sorted preferences.
     Tie-breaking on original first-round support, then index (relative incumbency, theoretically).
@@ -28,9 +27,11 @@ def ranked_choice_preference(preferences: np.ndarray) -> int:
     Params:
         preferences (np.ndarray): the voters' relative policy preferences; 
             preferences[i] is a list representing where the first element is voter i's most prefered policy, and so on
+        output_vote_counts (bool): If True, return a 2D np.ndarray with vote counts for each candidate by round.
 
     Returns:
-        int: the index of winning policy
+        int: the index of winning policy (if output_vote_counts is False)
+        np.ndarray: vote counts by candidate by round (if output_vote_counts is True)
     """
     num_voters, num_policies = preferences.shape
     active = np.ones(num_policies, dtype=bool)  # maintaining which policies are active
@@ -38,6 +39,8 @@ def ranked_choice_preference(preferences: np.ndarray) -> int:
     # original first-round votes to use as a tie-breaker
     original_first_choices = preferences[:, 0]
     original_first_round_counts = np.bincount(original_first_choices, minlength=num_policies)
+
+    vote_counts_by_round = []
 
     while True:
         # mask eliminated policies from preferences
@@ -51,9 +54,15 @@ def ranked_choice_preference(preferences: np.ndarray) -> int:
         # get the total number of active votes
         total_active_votes = counts[active].sum()
 
+        # Store vote counts for this round
+        if output_vote_counts:
+            vote_counts_by_round.append(counts.copy())
+
         # if more than half of active votes went to one policy, that policy is the winner
         for i in np.flatnonzero(active):
             if counts[i] > total_active_votes / 2:
+                if output_vote_counts:
+                    return np.array(vote_counts_by_round)
                 return i
 
         # finding which policy(s) received the least number of votes
