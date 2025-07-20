@@ -166,3 +166,123 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
 
         plt.grid(True)
         plt.show()
+
+    def gridsearch_policy_winmap(self, policies, new_policy_name, x_min, x_max, y_min, y_max, x_step, y_step, output_filename=None):
+        """
+        For each point on a 2D grid, adds a new policy at that point to the list of policies, runs compare_policies,
+        and records which policy would win. Plots a soft/decayed heatmap showing the winner at each gridpoint.
+        Voters are plotted as black dots. The color intensity decays with distance from each grid point.
+        Params:
+            policies (list[Policy]): List of existing Policy objects
+            x_min, x_max, y_min, y_max (float): bounds of the grid
+            x_step, y_step (float): step size for the grid
+            output_filename (str): if provided, saves the plot to this file
+        """
+        from matplotlib.colors import to_rgb
+        from scipy.interpolate import griddata
+        from scipy.ndimage import gaussian_filter
+
+        # Original grid for computation
+        x_vals = np.arange(x_min, x_max + x_step, x_step)
+        y_vals = np.arange(y_min, y_max + y_step, y_step)
+        win_map = np.zeros((len(y_vals), len(x_vals)), dtype=int)
+        policy_names = [p.name for p in policies]
+        n_policies = len(policies)
+        
+        # Compute win map at original grid resolution
+        for i, y in enumerate(y_vals):
+            for j, x in enumerate(x_vals):
+                new_policy = Policy(np.array([x, y]), name="GridPolicy")
+                test_policies = policies + [new_policy]
+                winner_idx = self.compare_policies(test_policies)
+                win_map[i, j] = winner_idx
+
+        # Apply Gaussian smoothing to create decay within each pixel
+        # Create finer display grid (10x finer resolution)
+        display_factor = 10
+        x_display = np.linspace(x_min, x_max, len(x_vals) * display_factor)
+        y_display = np.linspace(y_min, y_max, len(y_vals) * display_factor)
+        X_display, Y_display = np.meshgrid(x_display, y_display)
+        
+        # Interpolate win map to display resolution
+        x_grid, y_grid = np.meshgrid(x_vals, y_vals)
+        points = np.column_stack([x_grid.ravel(), y_grid.ravel()])
+        values = win_map.ravel()
+        win_map_display = griddata(points, values, (X_display, Y_display), method='nearest')
+        
+        # Create intensity maps at display resolution
+        intensity_maps = np.zeros((n_policies + 1, len(y_display), len(x_display)))
+        for policy_idx in range(n_policies + 1):
+            mask = (win_map_display == policy_idx)
+            intensity_maps[policy_idx] = mask.astype(float)
+        
+        # Apply Gaussian smoothing to each intensity map
+        sigma = 2  # Smoothing parameter - increased for more decay within each pixel
+        for i in range(n_policies + 1):
+            intensity_maps[i] = gaussian_filter(intensity_maps[i], sigma=sigma)
+        
+        # Normalize intensity maps
+        total_intensity = np.sum(intensity_maps, axis=0, keepdims=True)
+        total_intensity[total_intensity == 0] = 1
+        norm_intensity = intensity_maps / total_intensity
+        # color and name vis settings
+        mcolors_dict = mcolors.TABLEAU_COLORS
+
+        # ensuring blue and red are the first two colors used
+        del mcolors_dict['tab:blue']
+        del mcolors_dict['tab:red']
+        all_colors = ['blue', 'red'] + list(mcolors_dict.values())
+        policy_colors = all_colors[0:len(policies)+1]
+
+        policy_rgbs = np.array([to_rgb(policy_colors[i]) for i in range(n_policies + 1)])
+        
+        # Compose RGB image
+        rgb_img = np.tensordot(norm_intensity.transpose(1, 2, 0), policy_rgbs, axes=([2], [0]))
+        # Plot voters as black dots
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_axes([0.1, 0.1, 0.55, 0.7])  # Shrink plot inside the figure
+        voter_arr = np.array([v.ideal_policy.values for v in self.voters])
+        ax.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
+        
+        # Plotting heatmap
+        ax.imshow(rgb_img, origin='lower', extent=[x_min, x_max, y_min, y_max], aspect='auto')
+        # Optionally, plot policy locations
+        for idx, p in enumerate(policies):
+            ax.scatter(p.values[0], p.values[1], c=[policy_rgbs[idx]], s=80, edgecolor='k', marker='*', label=policy_names[idx], zorder=11)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_title(f'Winning Policy after Insertion of {new_policy_name} at each Grid Point')
+        
+        # Create legend with policy locations and background color mapping
+        legend_elements = []
+        
+        # Add policy location markers
+        for idx, p in enumerate(policies):
+            legend_elements.append(plt.Line2D([0], [0], marker='*', color='w', 
+                                            markerfacecolor=policy_rgbs[idx], 
+                                            markeredgecolor='k', markersize=10, 
+                                            label=f'{policy_names[idx]} (existing)'))
+        
+        # Add background color mapping
+        for idx in range(n_policies + 1):
+            if idx < len(policies):
+                policy_name = policy_names[idx]
+            else:
+                policy_name = "New Policy"
+            
+            legend_elements.append(plt.Rectangle((0, 0), 1, 1, facecolor=policy_rgbs[idx], 
+                                               alpha=0.7, label=f'Background: {policy_name} wins'))
+        
+        # Add voter marker
+        legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', 
+                                        markerfacecolor='k', markersize=6, 
+                                        label='Voters'))
+        
+        ax.legend(handles=legend_elements, loc="upper left", bbox_to_anchor=(1.05, 1), 
+                borderaxespad=0.0, fontsize=9)
+        if output_filename:
+            plt.savefig(output_filename, bbox_inches='tight')
+            print(f"Gridsearch winmap saved to {output_filename}")
+        else:
+            plt.show()
+        plt.close(fig)
