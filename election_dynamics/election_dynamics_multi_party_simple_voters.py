@@ -7,7 +7,7 @@ from ordered_set import OrderedSet
 
 from election_dynamics.election_dynamics_multi_party import ElectionDynamicsMultiParty
 from policies.policy import Policy
-from utility_functions.evaluation_functions import ranked_choice_preference_optimized
+from utility_functions.evaluation_functions import ranked_choice_preference
 from voters.simple_voter import SimpleVoter
 
 
@@ -20,32 +20,32 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
     ):
         self.voters = voters
         self.voter_arr = np.array([voter.ideal_policy.values for voter in self.voters])
-        self.evaluation_function = ranked_choice_preference_optimized
+        self.evaluation_function = ranked_choice_preference
         self.tiebreak_func = None
         self.issue_1 = issue_1  # Issue 1 name
         self.issue_2 = issue_2  # Issue 2 name
 
 
-    def compute_preferences(self, policies_arr: np.ndarray):
+    def tabulate_votes(self, policies: list[Policy]) -> np.ndarray:
         """
-        Computes ranked preferences for each voter by distance to policy.
-        Closer = higher utility. Ties broken by lower index.
-        
+        Computes ranked preferences for each voter by distance to policy (closer = higher utility).
+        Ties are broken by the index of the policy (lower index = higher utility).
+        Returns a 2D np.ndarray where each row is a voter's ranked policy indices (best to worst).
         Params:
-            policies: np.ndarray of shape (num_policies, policy_dim)
-
+            policies (list[Policy]): List of Policy objects.
         Returns:
-            np.ndarray of shape (num_voters, num_policies): each row is a ranking of policy indices
+            np.ndarray: shape (num_voters, num_policies)
         """
+        policies_arr = np.array([p.values for p in policies])
         dists = np.linalg.norm(self.voter_arr[:, np.newaxis, :] - policies_arr[np.newaxis, :, :], axis=2)
-        preferences = np.argsort(dists, axis=1)  # sorts each row
+        preferences = np.argsort(dists, axis=1)
         return preferences
 
 
     def animate_election(self, policies: list[Policy]):
         # TODO: include option for stopping at majority or at final two
         policies_arr = np.array([p.values for p in policies])
-        preferences = self.compute_preferences(policies_arr)
+        preferences = self.tabulate_votes(policies)
         num_voters, num_candidates = preferences.shape
         active = np.ones(num_candidates, dtype=bool)
 

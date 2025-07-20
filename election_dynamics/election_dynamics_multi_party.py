@@ -28,22 +28,26 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         self.issue_2 = issue_2  # Issue 2 name
 
     def compare_policies(self, policies: list[Policy]) -> int:
-        return self.evaluation_function(
-            self.tabulate_votes(policies)
-        )
-
-    def tabulate_votes(self, policies: list[Policy]) -> dict:
         """
-        Returns a 2d list where each sublist represents an individual voter's preferences. For example:
-
-        [
-            [1,2,3],
-            [2,1,3]
-        ]
-
-        means that voter 0's policy preferences are 1 > 2 > 3, and voter 1's policy preferences are 2 > 1 > 3.
+        Compares policies using the evaluation function. Takes a list of Policy objects, tabulates votes (returns ndarray), and passes to evaluation function.
+        Params:
+            policies (list[Policy]): List of Policy objects.
+        Returns:
+            int: Index of winning policy
         """
-        return [voter.rank_policies_by_utility_index_preference(policies) for voter in self.voters]
+        preferences = self.tabulate_votes(policies)
+        return self.evaluation_function(preferences)
+
+    def tabulate_votes(self, policies: list[Policy]) -> np.ndarray:
+        """
+        Returns a 2D np.ndarray where each row represents an individual voter's preferences (policy indices, ranked best to worst).
+        For example, array([[1,2,3], [2,1,3]]) means voter 0 prefers 1>2>3, voter 1 prefers 2>1>3.
+        Params:
+            policies (list[Policy]): List of Policy objects.
+        Returns:
+            np.ndarray: shape (num_voters, num_policies)
+        """
+        return np.array([voter.rank_policies_by_utility_index_preference(policies) for voter in self.voters])
 
     def plot_voters_first_choices(
         self, policies: list[Policy], verbose: bool = True
