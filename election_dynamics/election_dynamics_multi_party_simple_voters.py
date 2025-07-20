@@ -238,6 +238,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         )
         # Save to mp4
         ani.save(f"{output_folder}/{filename}.mp4", writer="ffmpeg", fps=fps)
+        print(f"Animation saved to {output_folder}/{filename}.png")
         plt.close(fig)
     
 
