@@ -1,3 +1,4 @@
+from collections import Counter
 import matplotlib.animation as animation
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -264,27 +265,26 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
             y_positions.append(pos)
         total_votes = np.sum(vote_counts_by_round[0])
 
-        # Prepare figure
-        # fig, ax = plt.subplots(figsize=(2*num_rounds+2, 1.2*num_candidates+2))
+        # prepare figure
         fig, ax = plt.subplots(figsize=(9, 6))
         ax.set_xlim(-0.5, num_rounds-0.5)
         ax.set_ylim(0, total_votes)
         ax.axis('off')
 
-        # Draw round labels at the top
+        # draw round labels at the top
         for r in range(num_rounds):
             ax.text(r, total_votes + total_votes*0.04, f"Round {r+1}", ha='center', va='top', fontsize=12, fontweight='bold')
 
-        # Draw candidate row labels on the left
+        # draw candidate row labels on the left
         for c in range(num_candidates):
-            # Find the first round where candidate is present
+            # find the first round where candidate is present
             for r in range(num_rounds):
                 if vote_counts_by_round[r, c] > 0:
                     y = y_positions[r][c] + vote_counts_by_round[r, c]/2
                     ax.text(-0.3, y, policy_names[c], ha='right', va='center', fontsize=11, fontweight='bold')
                     break
 
-        # Draw nodes (rectangles for each policy in each round)
+        # draw nodes (rectangles for each policy in each round)
         node_width = 0.3
         node_rects = {}
         for r in range(num_rounds):
@@ -298,40 +298,39 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
                     # Label
                     ax.text(r, y+count/2, f"{count}", ha='center', va='center', fontsize=10, color='black')
 
-        # Track which candidates are active each round
+        # track which candidates are active each round
         active = np.ones(num_candidates, dtype=bool)
         current_preferences = preferences.copy()
         for r in range(num_rounds-1):
             counts = vote_counts_by_round[r]
             next_counts = vote_counts_by_round[r+1]
-            # Find eliminated candidate (active in this round, but not in next)
+            # find eliminated candidate (active in this round, but not in next)
             eliminated = np.where((counts > 0) & (next_counts == 0))[0]
             if len(eliminated) == 0:
                 break  # No more eliminations
             elim = eliminated[0]
-            # For each voter whose top active choice is elim, find their next active choice
+            # for each voter whose top active choice is elim, find their next active choice
             mask = active[current_preferences]
             top_choice_indices = mask.argmax(axis=1)
             first_choices = current_preferences[np.arange(num_voters), top_choice_indices]
             affected_voters = np.where(first_choices == elim)[0]
-            # For each affected voter, find their next preferred active candidate
+            # for each affected voter, find their next preferred active candidate
             transfer_targets = []
             for v in affected_voters:
                 for pref in current_preferences[v]:
                     if active[pref] and pref != elim:
                         transfer_targets.append(pref)
                         break
-            # Count transfers
-            from collections import Counter
+            # count transfers
             transfer_counter = Counter(transfer_targets)
-            # Draw flows from elim in round r to each target in round r+1
+            # draw flows from elim in round r to each target in round r+1
             y0 = y_positions[r][elim]
             y1s = {c: y_positions[r+1][c] for c in transfer_counter}
             offset0 = 0
             offsets1 = {c: 0 for c in transfer_counter}
             for c, n in transfer_counter.items():
-                # Source rectangle (elim, r): (r-node_width/2, y0+offset0, node_width, n)
-                # Target rectangle (c, r+1): (r+1-node_width/2, y1s[c]+offsets1[c], node_width, n)
+                # dource rectangle (elim, r): (r-node_width/2, y0+offset0, node_width, n)
+                # target rectangle (c, r+1): (r+1-node_width/2, y1s[c]+offsets1[c], node_width, n)
                 verts = [
                     (r+node_width/2, y0+offset0),
                     (r+1-node_width/2, y1s[c]+offsets1[c]),
@@ -342,7 +341,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
                 ax.add_patch(polygon)
                 offset0 += n
                 offsets1[c] += n
-            # Eliminate the candidate
+            # eliminate the candidate
             active[elim] = False
         plt.title('RCV Vote Transfers (Sankey Diagram)', fontsize=16, pad=30, fontweight='bold')
         plt.tight_layout()
