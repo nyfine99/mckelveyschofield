@@ -27,12 +27,13 @@ def ranked_choice_preference(preferences: np.ndarray, output_vote_counts: bool =
     Params:
         preferences (np.ndarray): the voters' relative policy preferences; 
             preferences[i] is a list representing where the first element is voter i's most prefered policy, and so on
-        output_vote_counts (bool): If True, return a 2D np.ndarray with vote counts for each candidate by round.
+        output_vote_counts (bool): If True, return a 2D np.ndarray with vote counts for each policy by round.
 
     Returns:
         int: the index of winning policy (if output_vote_counts is False)
-        np.ndarray: vote counts by candidate by round (if output_vote_counts is True)
+        np.ndarray: vote counts by policy by round (if output_vote_counts is True)
     """
+    # TODO: add an option to not stop vote counting at majority, but only once two candidates are left
     num_voters, num_policies = preferences.shape
     active = np.ones(num_policies, dtype=bool)  # maintaining which policies are active
 
@@ -121,7 +122,7 @@ def fast_rcv_many_voters(preferences: np.ndarray):
             if counts[i] * 2 > total_votes:
                 return i
 
-        # Find lowest candidate with tiebreaking
+        # Find lowest policy with tiebreaking
         min_votes = 2147483647  # max int32
         to_eliminate = -1
 

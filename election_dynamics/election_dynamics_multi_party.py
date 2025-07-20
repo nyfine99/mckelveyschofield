@@ -146,7 +146,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                 if len(sorted_items) > 2:
                     description_string += f"\n{second_policy_name} is in second place, as the first choice of {second_policy_votes} voters."
                 else:
-                    # this is the last place candidate, phrase accordingly
+                    # this is the last place policy, phrase accordingly
                     description_string += f"\n{second_policy_name} trails, as the first choice of {second_policy_votes} voters."
 
             if len(sorted_items) > 2:
