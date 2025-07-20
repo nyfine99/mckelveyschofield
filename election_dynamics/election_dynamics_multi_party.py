@@ -1,8 +1,10 @@
 import matplotlib.animation as animation
 import matplotlib.colors as mcolors
+from matplotlib.colors import to_rgb
 import matplotlib.pyplot as plt
 import numpy as np
-from ordered_set import OrderedSet
+from scipy.interpolate import griddata
+from scipy.ndimage import gaussian_filter
 
 
 from election_dynamics.election_dynamics import ElectionDynamics
@@ -167,7 +169,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         plt.grid(True)
         plt.show()
 
-    def gridsearch_policy_winmap(self, policies, new_policy_name, x_min, x_max, y_min, y_max, x_step, y_step, output_filename=None):
+    def gridsearch_policy_winmap(self, policies, new_policy_name="New Policy", x_min=None, x_max=None, y_min=None, y_max=None, x_step=1, y_step=1, output_filename=None):
         """
         For each point on a 2D grid, adds a new policy at that point to the list of policies, runs compare_policies,
         and records which policy would win. Plots a soft/decayed heatmap showing the winner at each gridpoint.
@@ -178,11 +180,15 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             x_step, y_step (float): step size for the grid
             output_filename (str): if provided, saves the plot to this file
         """
-        from matplotlib.colors import to_rgb
-        from scipy.interpolate import griddata
-        from scipy.ndimage import gaussian_filter
-
         # Original grid for computation
+        if x_min is None:
+            x_min = min([v.ideal_policy.values[0] for v in self.voters]) - 1
+        if x_max is None:
+            x_max = max([v.ideal_policy.values[0] for v in self.voters]) + 1
+        if y_min is None:
+            y_min = min([v.ideal_policy.values[1] for v in self.voters]) - 1
+        if y_max is None:
+            y_max = max([v.ideal_policy.values[1] for v in self.voters]) + 1
         x_vals = np.arange(x_min, x_max + x_step, x_step)
         y_vals = np.arange(y_min, y_max + y_step, y_step)
         win_map = np.zeros((len(y_vals), len(x_vals)), dtype=int)
@@ -248,7 +254,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         ax.imshow(rgb_img, origin='lower', extent=[x_min, x_max, y_min, y_max], aspect='auto')
         # Optionally, plot policy locations
         for idx, p in enumerate(policies):
-            ax.scatter(p.values[0], p.values[1], c=[policy_rgbs[idx]], s=80, edgecolor='k', marker='*', label=policy_names[idx], zorder=11)
+            ax.scatter(p.values[0], p.values[1], c=[policy_rgbs[idx]], s=200, edgecolor='k', marker='o', label=policy_names[idx], zorder=11)
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_title(f'Winning Policy after Insertion of {new_policy_name} at each Grid Point')
@@ -258,7 +264,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         
         # Add policy location markers
         for idx, p in enumerate(policies):
-            legend_elements.append(plt.Line2D([0], [0], marker='*', color='w', 
+            legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', 
                                             markerfacecolor=policy_rgbs[idx], 
                                             markeredgecolor='k', markersize=10, 
                                             label=f'{policy_names[idx]} (existing)'))
