@@ -240,7 +240,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
             print("Not enough policies to hold an election!")
             return
         if len(policies) > 10:
-            print("Currently not enough colors to adequately plot!")
+            print("Too many policies to plot properly!")
             # TODO: change this
             return
         
@@ -248,12 +248,11 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         num_voters, num_candidates = preferences.shape
         policy_names = [p.name for p in policies]
 
-        # Run RCV and collect round-by-round vote counts
+        # run RCV and collect round-by-round vote counts
         vote_counts_by_round = self.evaluation_function(preferences, output_vote_counts=True)
-        vote_counts_by_round = vote_counts_by_round
         num_rounds = vote_counts_by_round.shape[0]
 
-        # For each round, build a mapping from policy to y-position (for stacking)
+        # for each round, build a mapping from policy to y-position (for stacking)
         y_positions = []
         for r in range(num_rounds):
             y = 0
@@ -266,14 +265,15 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         total_votes = np.sum(vote_counts_by_round[0])
 
         # Prepare figure
-        fig, ax = plt.subplots(figsize=(2*num_rounds+2, 1.2*num_candidates+2))
+        # fig, ax = plt.subplots(figsize=(2*num_rounds+2, 1.2*num_candidates+2))
+        fig, ax = plt.subplots(figsize=(9, 6))
         ax.set_xlim(-0.5, num_rounds-0.5)
         ax.set_ylim(0, total_votes)
         ax.axis('off')
 
         # Draw round labels at the top
         for r in range(num_rounds):
-            ax.text(r, total_votes + total_votes*0.04, f"Round {r+1}", ha='center', va='bottom', fontsize=14, fontweight='bold')
+            ax.text(r, total_votes + total_votes*0.04, f"Round {r+1}", ha='center', va='top', fontsize=12, fontweight='bold')
 
         # Draw candidate row labels on the left
         for c in range(num_candidates):
@@ -281,7 +281,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
             for r in range(num_rounds):
                 if vote_counts_by_round[r, c] > 0:
                     y = y_positions[r][c] + vote_counts_by_round[r, c]/2
-                    ax.text(-0.7, y, policy_names[c], ha='right', va='center', fontsize=12, fontweight='bold')
+                    ax.text(-0.3, y, policy_names[c], ha='right', va='center', fontsize=11, fontweight='bold')
                     break
 
         # Draw nodes (rectangles for each policy in each round)
@@ -296,7 +296,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
                     ax.add_patch(rect)
                     node_rects[(c, r)] = (r-node_width/2, y, node_width, count)
                     # Label
-                    ax.text(r, y+count/2, f"{count}", ha='center', va='center', fontsize=10, color='white' if count > total_votes/10 else 'black')
+                    ax.text(r, y+count/2, f"{count}", ha='center', va='center', fontsize=10, color='black')
 
         # Track which candidates are active each round
         active = np.ones(num_candidates, dtype=bool)
@@ -344,7 +344,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
                 offsets1[c] += n
             # Eliminate the candidate
             active[elim] = False
-        plt.title('RCV Vote Transfers (Sankey Diagram)', fontsize=16)
+        plt.title('RCV Vote Transfers (Sankey Diagram)', fontsize=16, pad=30, fontweight='bold')
         plt.tight_layout()
         if output_filepath:
             plt.savefig(output_filepath, bbox_inches='tight')
