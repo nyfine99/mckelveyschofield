@@ -4,7 +4,9 @@
 
 ## Description
 
-The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2%80%93Schofield_chaos_theorem) guarantees that, provided certain conditions are met, a set of voters with multidimensional preferences can be made to choose any policy over any other through a series of binary choices. This repo implements an algorithm which demostrates this visually, as well as providing the infrastructure for future expansions of this project towards exploring ranked-choice voting, finding the shortest possible path between any two policy positions, etc.
+The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2%80%93Schofield_chaos_theorem) guarantees that, provided certain conditions are met, a set of voters with multidimensional preferences can be made to choose any policy over any other through a series of binary choices. This repository contains scripts capable of demostrating this visually through several different types of plots and animations, as well as providing the infrastructure for future expansions of this project towards exploring other facets of electoral weirdness.
+
+Additionally, this project contains scripts capable of simulating ranked-choice voting, and visualizing the results of such elections through by-round animations and Sankey diagrams. And again, the infrastructure is provided to enable future expansions to explore other aspects of ranked-choice voting.
 
 This project is still very much underway. I hope to elaborate more on much of the above, and much of the following, in a later version of this README.
 
@@ -13,10 +15,10 @@ This project is still very much underway. I hope to elaborate more on much of th
 Assuming:
 - Voters and candidates/policies are represented as points in an n-dimensional Euclidean policy space (typically 2D).
 - Voters have full knowledge of their own preferences and the positions of all candidates/policies.
-- Voters vote sincerely for the option that gives them the highest utility.
+- Voters vote sincerely for the option that gives them the highest utility (or, in the case of ranked-choice voting, rank their options by greatest utility).
 
 This project supports:
-- Modeling elections with customizable voter types (currently assuming rational voters with simple Manhattan or Euclidean distance-based utility).
+- Modeling and visualizing two-party and ranked-choice voting elections with customizable voter types (currently assuming rational voters with simple Manhattan or Euclidean distance-based utility).
 - Identifying the set of policies that can defeat a given or incumbent policy via majority rule.
 - Finding a path, through a sequence of forced binary choices presented to voters, between any two policy positions in a two-dimensional plane (as McKelvey-Schofield guarantees possible, in most cases).
 - Applying these tools to real-world voter data (though not necessarily for real-world conclusions, given the simplified assumptions of the model; rather, to explore its implications and structure).
@@ -32,6 +34,13 @@ This project supports:
    cd mckelveyschofield
    ```
 3. Install dependencies
+   ```
+   pip install matplotlib
+   pip install numba
+   pip install numpy
+   pip install ordered_set
+   pip install pandas
+   ```
 
 ## Usage
 
@@ -58,6 +67,6 @@ Contributions are welcome! Please open an issue or submit a pull request.
 - McKelvey-Schofield pathfinding capabilities for voters with any weighted L1 or L2 norm utility functions.
 - A justification as to the validity of the winset boundary algorithm.
 - Exploration and possible implementation of non-greedy McKelvey-Schofield pathfinding.
-- Work with ranked-choice voting capabilities/animation.
+- Exploration of ranked-choice voting winsets, and how the introduction of a new policy influences the winner.
 
 ![pets_election](https://github.com/user-attachments/assets/66834c4c-b68e-4000-953d-8683cc284afe)

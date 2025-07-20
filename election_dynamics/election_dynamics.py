@@ -28,19 +28,3 @@ class ElectionDynamics(ABC):
     @abstractmethod
     def compare_policies(self):
         pass
-
-
-class ElectionDyanamicsMultiParty(ElectionDynamics):
-    """
-    TODO: will allow for implementation of multi-party elections and RCV.
-    """
-
-    def __init__(self, voters: list[Voter], evaluation_function: callable):
-        self.voters = voters
-        self.evaluation_function = evaluation_function
-
-    def tabulate_votes(self):
-        pass
-
-    def compare_policies(self, policies: list[Policy]):
-        return self.evaluation_function(self.voters, policies)

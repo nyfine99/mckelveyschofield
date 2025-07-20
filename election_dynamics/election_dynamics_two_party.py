@@ -488,7 +488,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             return None
 
         ani = animation.FuncAnimation(
-            fig, make_frame, frames=frame_gen(), init_func=init  # TODO: deal with cached frames limit via save_count
+            fig, make_frame, frames=frame_gen(), init_func=init, save_count=max_frames+5  # leaving some extra buffer
         )
         # Save to mp4
         ani.save(f"{output_folder}/{filename}.mp4", writer="ffmpeg", fps=fps)

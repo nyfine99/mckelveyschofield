@@ -52,3 +52,22 @@ class Voter():
         elif val < 0:
             return 2
         return 0
+
+    def rank_policies_by_utility_index_preference(self, policies: list[Policy]) -> list[int]:
+        """
+        Ranks policies by utility (closer to ideal_policy is better),
+        with ties broken by original index order (earlier is better).
+        TODO: figure out a more malleable tiebreak system.
+
+        Params:
+            policies (list[Policy]): A list of policies being considered by the voter
+
+        Returns:
+            list[int]: List of policy indices in ranked order (best to worst)
+        """
+        scored = [
+            (self.get_utility(policy), idx)
+            for idx, policy in enumerate(policies)
+        ]
+        scored.sort(reverse=True)  # sorts by distance, then by index
+        return [idx for _, idx in scored]
