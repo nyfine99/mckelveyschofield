@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit, int32, boolean
+from typing import Union
 
 def status_quo_preference(counts: list[int]):
     """
@@ -17,23 +18,32 @@ def tiebreak_status_quo_preference():
     return 0
 
 
-def ranked_choice_preference(preferences: np.ndarray, output_vote_counts: bool = False):
+def ranked_choice_preference(
+    preferences: np.ndarray,
+    stop_at_majority: bool = True,
+    output_vote_counts: bool = False
+) -> Union[int, np.ndarray]:
     """
-    Optimized Ranked Choice Voting (RCV) from sorted preferences.
+    Ranked Choice Voting (RCV) from sorted preferences.
     Tie-breaking on original first-round support, then index (relative incumbency, theoretically).
     Policies are not passed in as Policy objects, but are instead represented as integers (i.e. 
     policy 0, 1, ...).
+    The user may not want to stop vote counting at majority to see how votes would have been distributed 
+    if the election had been run to completion.
+    If stop_at_majority is True, the function will return results as soon as more than half of the votes go to one policy.
+    If stop_at_majority is False, the function will continue until only two policies are left.
 
     Params:
         preferences (np.ndarray): the voters' relative policy preferences; 
             preferences[i] is a list representing where the first element is voter i's most prefered policy, and so on
+        stop_at_majority (bool): If True, the function will return the index of the winning policy once more 
+            than half of the votes have been counted.
         output_vote_counts (bool): If True, return a 2D np.ndarray with vote counts for each policy by round.
 
     Returns:
-        int: the index of winning policy (if output_vote_counts is False)
-        np.ndarray: vote counts by policy by round (if output_vote_counts is True)
+        int | np.ndarray: the index of winning policy (if output_vote_counts is False), or
+            vote counts by policy by round (if output_vote_counts is True)
     """
-    # TODO: add an option to not stop vote counting at majority, but only once two candidates are left
     num_voters, num_policies = preferences.shape
     active = np.ones(num_policies, dtype=bool)  # maintaining which policies are active
 
@@ -55,13 +65,17 @@ def ranked_choice_preference(preferences: np.ndarray, output_vote_counts: bool =
         # get the total number of active votes
         total_active_votes = counts[active].sum()
 
-        # Store vote counts for this round
+        # store vote counts for this round
         if output_vote_counts:
             vote_counts_by_round.append(counts.copy())
 
-        # if more than half of active votes went to one policy, that policy is the winner
+        # determining if any policy can be declared the winner
         for i in np.flatnonzero(active):
-            if counts[i] > total_active_votes / 2:
+            if (
+                stop_at_majority and counts[i] > total_active_votes / 2
+            ) or (
+                not stop_at_majority and len(active[active == True]) == 2  and counts[i] > total_active_votes / 2
+            ):
                 if output_vote_counts:
                     return np.array(vote_counts_by_round)
                 return i

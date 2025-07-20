@@ -1,4 +1,5 @@
 from collections import Counter
+import copy
 import matplotlib.animation as animation
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -42,19 +43,35 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         return preferences
 
 
-    def animate_election(self, policies: list[Policy]):
-        # TODO: include option for stopping at majority or at final two
+    def animate_election(
+        self, 
+        policies: list[Policy],
+        stop_at_majority: bool = True,
+        output_folder="output",
+        filename="rcv_election_animation",
+        plot_verbose=True,
+        fps=0.5,
+    ):
+        # setup
+        if len(policies) < 2:
+            print("Not enough policies to hold an election!")
+            return
+        if len(policies) > 10:
+            print("Not enough colors to adequately plot!")
+            return
+        
         policies_arr = np.array([p.values for p in policies])
         preferences = self.tabulate_votes(policies)
         num_voters, num_candidates = preferences.shape
         active = np.ones(num_candidates, dtype=bool)
+        done = {"stop": False}
 
         original_first_choices = preferences[:, 0]
         original_first_round_counts = np.bincount(original_first_choices, minlength=num_candidates)
 
     
         # color and name vis settings
-        mcolors_dict = mcolors.TABLEAU_COLORS
+        mcolors_dict = copy.deepcopy(mcolors.TABLEAU_COLORS)
 
         # ensuring blue and red are the first two colors used
         del mcolors_dict['tab:blue']
@@ -65,13 +82,6 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
 
         # plot
         # initialize the figure and axes
-        if len(policies) < 2:
-            print("Not enough policies to hold an election!")
-            return
-        if len(policies) > 10:
-            print("Currently not enough colors to adequately plot!")
-            # TODO: change this
-            return
         fig = plt.figure()
 
         def make_frame(f_num):
@@ -85,6 +95,15 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
             counts = np.bincount(first_choices, minlength=num_candidates)
             total_active_votes = counts[active].sum()
             ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
+
+             # determining if the stopping condition has been met
+            for i in np.flatnonzero(active):
+                if (
+                    stop_at_majority and counts[i] > total_active_votes / 2
+                ) or (
+                    not stop_at_majority and len(active) == 2  and counts[i] > total_active_votes / 2
+                ):
+                    done["stop"] = True
 
             # plotting all voters and policies
             voters_by_vote = {}
@@ -147,7 +166,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
             plt.xlabel(f"Position on {self.issue_1}")
             plt.ylabel(f"Position on {self.issue_2}")
 
-            if True:
+            if plot_verbose:
                 # sorting voters_by_vote by first round vote count
                 description_string = "In first-choice selections"
                 sorted_items = sorted(voters_by_vote.items(), key=lambda item: len(item[1]), reverse=True)
@@ -174,9 +193,14 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
                     last_policy_idx = sorted_items[-1][0]
                     last_policy_name = policy_names[last_policy_idx]
                     last_policy_votes = sorted_items[-1][1]
-                    description_string += "\n..."
+                    if len(sorted_items) > 3:
+                            description_string += "\n..."
                     description_string += f"\n{last_policy_name} is in last place, as the first choice of {last_policy_votes} voters."
-                    description_string += f"\nSo, {last_policy_name} is eliminated."
+                    if not done["stop"]:
+                        description_string += f"\nSo, {last_policy_name} is eliminated."
+                    else:
+                        # stopping condition has been met, declare winner
+                        description_string += f"\n{top_policy_name} has a majority of votes, so {top_policy_name} wins!"
 
                 fig.text(
                     0.1,
@@ -185,14 +209,8 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
                     fontsize=8,
                     color="black",
                 )
-
+            
             # eliminating losers
-            for i in np.flatnonzero(active):
-                if counts[i] > total_active_votes / 2:
-                    # TODO: implement an option that allows for stopping after a candidate
-                    # receives over 50%
-                    pass
-
             min_votes = counts[active].min()
             lowest = np.flatnonzero((counts == min_votes) & active)
 
@@ -209,7 +227,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         
         def frame_gen():
             f_num = 0
-            while True:
+            while not done["stop"]:
                 if f_num >= len(policies) - 1:
                     break
                 yield f_num
@@ -219,11 +237,17 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
             fig, make_frame, frames=frame_gen(), init_func=init, save_count=len(policies)+5  # leaving some extra buffer
         )
         # Save to mp4
-        ani.save(f"output/rcv.mp4", writer="ffmpeg", fps=.5)
+        ani.save(f"{output_folder}/{filename}.mp4", writer="ffmpeg", fps=fps)
         plt.close(fig)
     
 
-    def create_election_sankey_diagram(self, policies: list[Policy], output_filepath: str = None):
+    def create_election_sankey_diagram(
+        self, 
+        policies: list[Policy], 
+        stop_at_majority: bool = True,
+        output_folder="output",
+        filename=None
+    ):
         """
         Creates a round-by-round alluvial (Sankey-like) diagram using matplotlib, showing how votes are 
         redistributed as candidates are eliminated. 
@@ -231,18 +255,13 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         each node is labeled as policy_name and sized by vote count, and flows are drawn between nodes
         in adjacent rounds.
         Note: the sankey library is not used here, as its capabilities do not allow for the desired visualization.
-
-        Params:
-            policies (list[Policy]): list of Policy objects.
-            output_filepath (str): if provided, saves the plot to this filepath (e.g., 'output/rcv_alluvial.png');
-                if not provided, the plot is displayed in a window
         """
+
         if len(policies) < 2:
             print("Not enough policies to hold an election!")
             return
         if len(policies) > 10:
             print("Too many policies to plot properly!")
-            # TODO: change this
             return
         
         preferences = self.tabulate_votes(policies)
@@ -250,7 +269,7 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         policy_names = [p.name for p in policies]
 
         # run RCV and collect round-by-round vote counts
-        vote_counts_by_round = self.evaluation_function(preferences, output_vote_counts=True)
+        vote_counts_by_round = self.evaluation_function(preferences, stop_at_majority=stop_at_majority, output_vote_counts=True)
         num_rounds = vote_counts_by_round.shape[0]
 
         # for each round, build a mapping from policy to y-position (for stacking)
@@ -345,9 +364,9 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
             active[elim] = False
         plt.title('RCV Vote Transfers (Sankey Diagram)', fontsize=16, pad=30, fontweight='bold')
         plt.tight_layout()
-        if output_filepath:
-            plt.savefig(output_filepath, bbox_inches='tight')
-            print(f"Alluvial diagram saved to {output_filepath}")
+        if output_folder is not None and filename is not None:
+            plt.savefig(f"{output_folder}/{filename}.png", bbox_inches='tight')
+            print(f"Sankey diagram saved to {output_folder}/{filename}.png")
         else:
             plt.show()
         plt.close(fig)
