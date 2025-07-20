@@ -1,6 +1,5 @@
 from random import gauss, seed
 import numpy as np
-from datetime import datetime
 
 from policies.policy import Policy
 from voters.simple_voter import SimpleVoter
