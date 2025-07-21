@@ -531,11 +531,11 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         if len(policies) < 2:
             print("Not enough policies to hold an election!")
             return
-        if len(policies) > 9:
+        if len(policies) > 8:
             print("Too many policies to plot properly!")
             return
 
-        # Original grid for computation
+        # original grid for computation
         if x_min is None:
             x_min = min([v.ideal_policy.values[0] for v in self.voters]) - 1
         if x_max is None:
@@ -550,7 +550,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         policy_names = [p.name for p in policies]
         n_policies = len(policies)
         
-        # Compute win map at original grid resolution
+        # compute win map at original grid resolution
         for i, y in enumerate(y_vals):
             for j, x in enumerate(x_vals):
                 new_policy = Policy(np.array([x, y]), name="GridPolicy")
@@ -558,59 +558,58 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                 winner_idx = self.compare_policies(test_policies)
                 win_map[i, j] = winner_idx
 
-        # Apply Gaussian smoothing to create decay within each pixel
-        # Create finer display grid (10x finer resolution)
+        # apply Gaussian smoothing to create decay within each pixel
+        # create finer display grid (10x finer resolution)
         display_factor = 10
         x_display = np.linspace(x_min, x_max, len(x_vals) * display_factor)
         y_display = np.linspace(y_min, y_max, len(y_vals) * display_factor)
         X_display, Y_display = np.meshgrid(x_display, y_display)
         
-        # Interpolate win map to display resolution
+        # interpolate win map to display resolution
         x_grid, y_grid = np.meshgrid(x_vals, y_vals)
         points = np.column_stack([x_grid.ravel(), y_grid.ravel()])
         values = win_map.ravel()
         win_map_display = griddata(points, values, (X_display, Y_display), method='nearest')
         
-        # Create intensity maps at display resolution
+        # create intensity maps at display resolution
         intensity_maps = np.zeros((n_policies + 1, len(y_display), len(x_display)))
         for policy_idx in range(n_policies + 1):
             mask = (win_map_display == policy_idx)
             intensity_maps[policy_idx] = mask.astype(float)
         
-        # Apply Gaussian smoothing to each intensity map
-        sigma = 2  # Smoothing parameter - increased for more decay within each pixel
+        # apply Gaussian smoothing to each intensity map
+        sigma = 2  # smoothing parameter - increased for more decay within each pixel
         for i in range(n_policies + 1):
             intensity_maps[i] = gaussian_filter(intensity_maps[i], sigma=sigma)
         
-        # Normalize intensity maps
+        # normalize intensity maps
         total_intensity = np.sum(intensity_maps, axis=0, keepdims=True)
         total_intensity[total_intensity == 0] = 1
         norm_intensity = intensity_maps / total_intensity
         
         # color and name vis settings
-        all_colors = COLORS_FOR_PLOTTING
-        policy_colors = all_colors[0:len(policies)+1]
+        policy_colors = COLORS_FOR_PLOTTING[0:len(policies)+1]
 
         policy_rgbs = np.array([to_rgb(policy_colors[i]) for i in range(n_policies + 1)])
         
-        # Compose RGB image
+        # compose RGB image
         rgb_img = np.tensordot(norm_intensity.transpose(1, 2, 0), policy_rgbs, axes=([2], [0]))
-        # Plot voters as black dots
+        # plot voters as black dots
         fig = plt.figure(figsize=(9, 6))
         ax = fig.add_axes([0.1, 0.15, 0.5, 0.75])  # Shrink plot inside the figure
         voter_arr = np.array([v.ideal_policy.values for v in self.voters])
         ax.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
         
-        # Plotting heatmap
+        # plotting heatmap
         ax.imshow(rgb_img, origin='lower', extent=[x_min, x_max, y_min, y_max], aspect='auto')
-        # Optionally, plot policy locations
+        # optionally, plot policy locations
         for idx, p in enumerate(policies):
             ax.scatter(p.values[0], p.values[1], c=[policy_rgbs[idx]], s=200, edgecolor='k', marker='o', label=policy_names[idx], zorder=11)
         ax.set_xlabel(self.issue_1)
         ax.set_ylabel(self.issue_2)
         ax.set_title(f'Winning Policy after Insertion of {new_policy_name} at each Grid Point')
         
-        # Create legend with policy locations and background color mapping
+        # create legend with policy locations and background color mapping
         legend_elements = []
         
         # Add policy location markers
@@ -620,7 +619,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                                             markeredgecolor='k', markersize=10, 
                                             label=f'{policy_names[idx]} (existing)'))
         
-        # Add background color mapping
+        # add background color mapping
         for idx in range(n_policies + 1):
             if idx < len(policies):
                 policy_name = policy_names[idx]
@@ -630,7 +629,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             legend_elements.append(plt.Rectangle((0, 0), 1, 1, facecolor=policy_rgbs[idx], 
                                                alpha=0.7, label=f'Background: {policy_name} wins'))
         
-        # Add voter marker
+        # add voter marker
         legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', 
                                         markerfacecolor='k', markersize=6, 
                                         label='Voters'))
