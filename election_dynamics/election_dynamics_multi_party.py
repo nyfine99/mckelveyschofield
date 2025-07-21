@@ -516,13 +516,26 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         plt.close(fig)
 
 
-    def gridsearch_policy_winmap(self, policies, new_policy_name="New Policy", x_min=None, x_max=None, y_min=None, y_max=None, x_step=1, y_step=1, output_filename=None):
+    def gridsearch_policy_winmap(
+        self, 
+        policies: list[Policy], 
+        new_policy_name="New Policy", 
+        x_min=None, 
+        x_max=None, 
+        y_min=None, 
+        y_max=None, 
+        x_step=1, 
+        y_step=1, 
+        output_filename=None
+    ):
         """
         For each point on a 2D grid, adds a new policy at that point to the list of policies, runs compare_policies,
         and records which policy would win. Plots a soft/decayed heatmap showing the winner at each gridpoint.
-        Voters are plotted as black dots. The color intensity decays with distance from each grid point.
+        Voters are plotted as black dots.
+
         Params:
             policies (list[Policy]): List of existing Policy objects
+            new_policy_name (str): name of the new policy to compete with the existing policies
             x_min, x_max, y_min, y_max (float): bounds of the grid
             x_step, y_step (float): step size for the grid
             output_filename (str): if provided, saves the plot to this file
