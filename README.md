@@ -23,6 +23,8 @@ This project supports:
 - Finding a path, through a sequence of forced binary choices presented to voters, between any two policy positions in a two-dimensional plane (as McKelvey-Schofield guarantees possible, in most cases).
 - Applying these tools to real-world voter data (though not necessarily for real-world conclusions, given the simplified assumptions of the model; rather, to explore its implications and structure).
 
+See the `docs` folder for a further exploration of the capabilities offered in this repository!
+
 ## Installation
 
 1. Clone the repository:

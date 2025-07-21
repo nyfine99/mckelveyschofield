@@ -327,7 +327,13 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         plt.close(fig)
 
     def plot_winset_boundary(
-        self, current_policy, n_directions=360, n_halving_iterations=12, angle_offset=0
+        self,
+        current_policy,
+        n_directions=360,
+        n_halving_iterations=12,
+        angle_offset=0,
+        output_folder="output",
+        filename=None,
     ):
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
@@ -402,5 +408,10 @@ class ElectionDynamicsTwoPartySimpleVoters(ElectionDynamicsTwoParty):
         plt.xlabel(f"Position on {self.issue_1}")
         plt.ylabel(f"Position on {self.issue_2}")
         plt.grid(True)
-        plt.show()
+
+        # saving or showing the plot
+        if output_folder is not None and filename is not None:
+            plt.savefig(f"{output_folder}/{filename}", bbox_inches="tight")
+        else:
+            plt.show()
         plt.close()
