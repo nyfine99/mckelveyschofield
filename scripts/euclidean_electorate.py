@@ -28,7 +28,13 @@ if __name__ == "__main__":
     # electorate.plot_election_2d(p1, p2, verbose=True)
 
     # plotting a winset
-    # electorate.plot_winset_boundary(p1, n_directions=360, n_halving_iterations=12)
+    electorate.plot_winset_boundary(
+        p1,
+        n_directions=360,
+        n_halving_iterations=12,
+        output_folder="output",
+        filename="euclidean_electorate_centrism_winset_boundary.png"
+    )
 
     # plotting a path from the moderate position to the extreme one
     s_time = datetime.now()
