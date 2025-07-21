@@ -79,4 +79,4 @@ for i in range(4):
 # big_us_rcv.create_election_sankey_diagram(policies_list)
 # big_us_rcv.create_election_sankey_diagram(huge_policies_list)
 
-us_rcv.gridsearch_policy_winmap([mod_left, mod_right])
+us_rcv.gridsearch_policy_winmap([extreme_left, extreme_populism])

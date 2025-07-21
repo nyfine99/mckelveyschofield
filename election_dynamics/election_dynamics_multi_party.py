@@ -245,8 +245,8 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         # Compose RGB image
         rgb_img = np.tensordot(norm_intensity.transpose(1, 2, 0), policy_rgbs, axes=([2], [0]))
         # Plot voters as black dots
-        fig = plt.figure(figsize=(8, 6))
-        ax = fig.add_axes([0.1, 0.1, 0.55, 0.7])  # Shrink plot inside the figure
+        fig = plt.figure(figsize=(9, 6))
+        ax = fig.add_axes([0.1, 0.15, 0.5, 0.75])  # Shrink plot inside the figure
         voter_arr = np.array([v.ideal_policy.values for v in self.voters])
         ax.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
         
@@ -255,8 +255,8 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         # Optionally, plot policy locations
         for idx, p in enumerate(policies):
             ax.scatter(p.values[0], p.values[1], c=[policy_rgbs[idx]], s=200, edgecolor='k', marker='o', label=policy_names[idx], zorder=11)
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
+        ax.set_xlabel(self.issue_1)
+        ax.set_ylabel(self.issue_2)
         ax.set_title(f'Winning Policy after Insertion of {new_policy_name} at each Grid Point')
         
         # Create legend with policy locations and background color mapping
