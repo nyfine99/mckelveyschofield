@@ -25,7 +25,7 @@ This module provides tools for simulating and visualizing RCV elections in multi
 
 ![Grid Winmap Example](gallery/echelon_electorate_rcv_winmap.png)
 
-*Blue regions indicate where inserting a new policy would lead to a win for the blue policy, orange for orange, etc. Additionally, in the case above, the gray regions indicate where inserting a new policy would lead to a victory for that new policy itself. Black dots are voters; large circles are existing policies.*
+*Blue regions indicate where inserting a new policy would lead to a win for the blue policy under RCV, orange for orange, etc. Additionally, in the case above, the gray regions indicate where inserting a new policy would lead to a victory for that new policy itself. Black dots are voters; large circles are existing policies.*
 
 ## How to Use
 
