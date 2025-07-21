@@ -7,11 +7,11 @@ This repository provides tools for exploring the McKelvey-Schofield chaos theore
 - **Winset Boundary Visualization:**  
   Compute and plot the set of policies that can defeat a given status quo under majority rule.
 
-- **McKelvey-Schofield Path Animation:**  
-  Animate the sequence of policy changes as the agenda setter moves through the winset, showing the “chaotic” path to any point in the policy space.
-
 - **Greedy and Lookahead Path Algorithms:**  
-  Simulate different agenda-setting strategies (greedy, lookahead, adjusted) and visualize their trajectories.
+  Simulate different agenda-setting strategies (greedy, lookahead, adjusted) for use in constructing a McKelvey-Schofield path.
+
+- **McKelvey-Schofield Path Plotting and Animation:**  
+  Animate or plot the sequence of policy changes as the agenda setter moves through the policy space, showing a path of binary options through which voters can be made to choose an undesirable policy over a desirable one.
 
 ## Example Visualizations
 

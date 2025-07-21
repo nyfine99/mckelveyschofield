@@ -8,8 +8,6 @@ The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2
 
 Additionally, this project contains scripts capable of simulating ranked-choice voting, and visualizing the results of such elections through by-round animations and Sankey diagrams. And again, the infrastructure is provided to enable future expansions to explore other aspects of ranked-choice voting.
 
-This project is still very much underway. I hope to elaborate more on much of the above, and much of the following, in a later version of this README.
-
 ## Features
 
 Assuming:
@@ -23,7 +21,7 @@ This project supports:
 - Finding a path, through a sequence of forced binary choices presented to voters, between any two policy positions in a two-dimensional plane (as McKelvey-Schofield guarantees possible, in most cases).
 - Applying these tools to real-world voter data (though not necessarily for real-world conclusions, given the simplified assumptions of the model; rather, to explore its implications and structure).
 
-See the `docs` folder for a further exploration of the capabilities offered in this repository!
+**See the `docs` folder for a deeper dive into the capabilities offered in this repository!**
 
 ## Installation
 
@@ -70,6 +68,6 @@ Contributions are welcome! Please open an issue or submit a pull request.
 - McKelvey-Schofield pathfinding capabilities for voters with any weighted L1 or L2 norm utility functions.
 - A justification as to the validity of the winset boundary algorithm.
 - Exploration and possible implementation of non-greedy McKelvey-Schofield pathfinding.
-- Exploration of ranked-choice voting winsets, and how the introduction of a new policy influences the winner.
+- Exploration of ranked-choice voting with limits on how many policies voters can put on their ballots, and finding the optimal location to insert a new policy.
 
 ![pets_election](https://github.com/user-attachments/assets/66834c4c-b68e-4000-953d-8683cc284afe)
