@@ -1,4 +1,4 @@
-from election_dynamics.electorates import create_us_electorate_multiparty_fptp, create_us_electorate_multiparty_rcv
+from election_dynamics.electorates import create_us_electorate_echelon_multiparty_fptp, create_us_electorate_multiparty_rcv
 from policies.policy import Policy
 
 if __name__ == "__main__":
@@ -10,8 +10,6 @@ if __name__ == "__main__":
     libertarian = Policy([70,30], "Libertarianism")
     extreme_left = Policy([10,10], "Extreme Leftism")
     extreme_right = Policy([90,90], "Extreme Rightism")
-    lean_right = Policy([60,60], "Slight Conservatism")
-    lean_left = Policy([40,40], "Slight Liberalism")
 
     all_policies_list = [
         mod_left,
@@ -21,14 +19,12 @@ if __name__ == "__main__":
         libertarian,
         extreme_left,
         extreme_right,
-        lean_left,
-        lean_right,
     ]
 
     # defining electorates
     rcv_electorate = create_us_electorate_multiparty_rcv()
-    fptp_electorate = create_us_electorate_multiparty_fptp()
+    fptp_electorate = create_us_electorate_echelon_multiparty_fptp()
 
     # obtaining winmaps
-    rcv_electorate.plot_winmap(all_policies_list, output_filename="output/echelon_electorate_rcv_winmap.png")
-    fptp_electorate.plot_winmap(all_policies_list, output_filename="output/echelon_electorate_fptp_winmap.png")
+    rcv_electorate.gridsearch_policy_winmap(all_policies_list, output_filename="output/echelon_electorate_rcv_winmap.png")
+    fptp_electorate.gridsearch_policy_winmap(all_policies_list, output_filename="output/echelon_electorate_fptp_winmap.png")
