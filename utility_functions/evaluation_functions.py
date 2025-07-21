@@ -18,6 +18,32 @@ def tiebreak_status_quo_preference():
     return 0
 
 
+def first_past_the_post(
+    preferences: np.ndarray,
+) -> int:
+    """
+    First-past-the-post (FPTP) from sorted preferences.
+    Tie-breaking is done on index (relative incumbency, theoretically).
+    Policies are not passed in as Policy objects, but are instead represented as integers (i.e. 
+    policy 0, 1, ...).
+
+    Params:
+        preferences (np.ndarray): the voters' relative policy preferences; 
+            preferences[i] is a list representing where the first element is voter i's most prefered policy, and so on
+
+    Returns:
+        int: the index of winning policy
+    """
+    _, num_policies = preferences.shape
+
+    # get policy index of top choice for each voter
+    first_choices = preferences[:, 0]
+    # get the current count for each policy
+    counts = np.bincount(first_choices, minlength=num_policies)
+
+    return counts.argmax()
+
+
 def ranked_choice_preference(
     preferences: np.ndarray,
     stop_at_majority: bool = True,
