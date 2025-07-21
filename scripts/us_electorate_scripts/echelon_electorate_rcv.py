@@ -1,7 +1,5 @@
-from numpy import squeeze
-from election_dynamics.electorates import create_us_electorate_echelon_sample_rcv
+from election_dynamics.electorates import create_us_electorate_multiparty_rcv
 from policies.policy import Policy
-from voters.simple_voter import SimpleVoter
 
 if __name__ == "__main__":
     # defining policies across the ideological spectrum
@@ -12,7 +10,6 @@ if __name__ == "__main__":
     libertarian = Policy([70,30], "Libertarianism")
     extreme_left = Policy([10,10], "Extreme Leftism")
     extreme_right = Policy([90,90], "Extreme Rightism")
-    extreme_populist = Policy([10,90], "Extreme Populism")
     lean_right = Policy([60,60], "Slight Conservatism")
     lean_left = Policy([40,40], "Slight Liberalism")
 
@@ -39,13 +36,12 @@ if __name__ == "__main__":
         libertarian,
         extreme_left,
         extreme_right,
-        extreme_populist,
         lean_left,
         lean_right,
     ]
 
     # defining electorate
-    rcv_electorate = create_us_electorate_echelon_sample_rcv()
+    rcv_electorate = create_us_electorate_multiparty_rcv()
 
     # animating the elections
     rcv_electorate.animate_election(

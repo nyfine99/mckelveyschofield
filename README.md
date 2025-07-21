@@ -40,6 +40,7 @@ This project supports:
    pip install numpy
    pip install ordered_set
    pip install pandas
+   pip install scipy
    ```
 
 ## Usage
