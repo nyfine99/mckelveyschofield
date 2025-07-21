@@ -1,7 +1,5 @@
-from numpy import squeeze
 from election_dynamics.electorates import create_us_electorate_multiparty_rcv
 from policies.policy import Policy
-from voters.simple_voter import SimpleVoter
 
 if __name__ == "__main__":
     # defining policies across the ideological spectrum
