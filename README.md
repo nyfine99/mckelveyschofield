@@ -35,6 +35,7 @@ This project supports:
    ```
 3. Install dependencies
    ```
+   pip install deap
    pip install matplotlib
    pip install numba
    pip install numpy
