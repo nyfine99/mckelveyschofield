@@ -95,16 +95,32 @@ def ranked_choice_preference(
         if output_vote_counts:
             vote_counts_by_round.append(counts.copy())
 
-        # determining if any policy can be declared the winner
-        for i in np.flatnonzero(active):
-            if (
-                stop_at_majority and counts[i] > total_active_votes / 2
-            ) or (
-                not stop_at_majority and len(active[active == True]) == 2  and counts[i] > total_active_votes / 2
-            ):
-                if output_vote_counts:
-                    return np.array(vote_counts_by_round)
-                return i
+        # determining if any policy can/must be declared the winner
+        if (
+            stop_at_majority and max(counts) > total_active_votes / 2
+        ) or (
+            len(active[active == True]) == 2
+        ):
+            if output_vote_counts:
+                return np.array(vote_counts_by_round)
+            
+            # we need to determine which policy is the winner
+            initial_winner = counts.argmax()
+            if counts[initial_winner] > total_active_votes / 2:
+                return initial_winner
+
+            # otherwise, we have a tie, and need to apply tiebreaks
+            max_votes = counts[active].max()
+            greatest = np.flatnonzero((counts == max_votes) & active)
+
+            # applying tiebreak 1 (original first-round support)
+            orig_support = original_first_round_counts[greatest]
+            max_orig = orig_support.max()
+            greatest = greatest[orig_support == max_orig]
+
+            # applying tiebreak 2 (smallest index wins) if needed
+            return greatest.min()
+
 
         # finding which policy(s) received the least number of votes
         min_votes = counts[active].min()
@@ -116,8 +132,8 @@ def ranked_choice_preference(
             min_orig = orig_support.min()
             lowest = lowest[orig_support == min_orig]
 
-        # due to how argmax works, tiebreak 2 (smallest index) will have already been applied if needed
-        to_eliminate = lowest.min()
+        # applying tiebreak 2 (smallest index wins) if needed
+        to_eliminate = lowest.max()
 
         # eliminate worst-performing policy
         active[to_eliminate] = False
