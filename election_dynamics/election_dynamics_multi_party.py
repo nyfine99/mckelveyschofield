@@ -663,13 +663,15 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
     def genetic_search_best_policy(
         self,
         policies,
-        x_bounds,
-        y_bounds,
         performance_func=min_mov,
         pop_size=100,
         ngen=40,
         cxpb=0.5,
         mutpb=0.2,
+        x_bounds=None,
+        y_bounds=None,
+        sigma_x=None,
+        sigma_y=None,
         output_folder="output",
         output_files_base_name=None,
         animate_genetic_search=False,
@@ -678,13 +680,25 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         show_outputs=False,
     ) -> tuple[Policy, float]:
         """
-        Uses a genetic algorithm (DEAP) to find the best-performing policy to insert into an election, given pre-existing policies.
+        Uses a genetic algorithm (DEAP) and a user-defined performance function to find the best-performing policy
+        to insert into an election, given pre-existing policies, as well as that policy's score.
         The user provides a performance_func that takes the round-by-round vote matrix and returns a score (higher is better).
-        Plots a heatmap of the final population's scores, and optionally animates the evolution.
+        Optionally animates the evolution, and plots the best policy's election and sankey diagram.
         """
         # Setup DEAP
         creator.create("FitnessMax", base.Fitness, weights=(1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMax)
+
+        # obtain search bounds and mutation sigma, if not provided
+        voter_arr = np.array([v.ideal_policy.values for v in self.voters])
+        if x_bounds is None:
+            x_bounds = [voter_arr[:, 0].min(), voter_arr[:, 0].max()]
+        if y_bounds is None:
+            y_bounds = [voter_arr[:, 1].min(), voter_arr[:, 1].max()]
+        if sigma_x is None:
+            sigma_x = (x_bounds[1] - x_bounds[0]) / 20  # baseline assumption - 5% of the range
+        if sigma_y is None:
+            sigma_y = (y_bounds[1] - y_bounds[0]) / 20  # baseline assumption - 5% of the range
 
         toolbox = base.Toolbox()
         toolbox.register("attr_float_x", random.uniform, x_bounds[0], x_bounds[1])
@@ -705,7 +719,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         toolbox.register("evaluate", eval_policy)
         toolbox.register("mate", tools.cxBlend, alpha=0.5)
         # toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.2, indpb=0.5)  # original values
-        toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=5, indpb=0.5)  # maybe sigma should vary based on the range of the policy space
+        toolbox.register("mutate", tools.mutGaussian, mu=(0, 0), sigma=(sigma_x, sigma_y), indpb=0.5)  # maybe sigma should vary based on the range of the policy space
         toolbox.register("select", tools.selTournament, tournsize=3)
 
         pop = toolbox.population(n=pop_size)
@@ -746,7 +760,6 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         if animate_genetic_search:
             fig = plt.figure(figsize=(12, 6))
             gs = gridspec.GridSpec(2, 2, width_ratios=[3,1], height_ratios=[1,1], wspace=0.3, hspace=0.3)
-            voter_arr = np.array([v.ideal_policy.values for v in self.voters])
             ax1 = fig.add_subplot(gs[:,0])
             ax2 = fig.add_subplot(gs[0,1])
             ax3 = fig.add_subplot(gs[1,1])
