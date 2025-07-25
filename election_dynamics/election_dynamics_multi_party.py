@@ -766,21 +766,21 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             ax3 = fig.add_subplot(gs[1,1])
             ax1.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
             for idx, p in enumerate(policies):
-                ax1.scatter(p.values[0], p.values[1], c='gray', s=100, edgecolor='k', marker='o', label='Existing Policy' if idx==0 else None, zorder=11)
+                ax1.scatter(p.values[0], p.values[1], c='darkgray', s=100, edgecolor='k', marker='o', label='Existing Policies' if idx==0 else None, zorder=11)
             all_scores = np.concatenate([np.array(gen)[:,2] for gen in history])
             vmin, vmax = np.min(all_scores), np.max(all_scores)
-            scat = ax1.scatter([], [], c=[], cmap='viridis', s=60, edgecolor='k', vmin=vmin, vmax=vmax, zorder=20)
+            scat = ax1.scatter([], [], c=[], cmap='viridis', s=60, edgecolor='k', vmin=vmin, vmax=vmax, label='Attempted New Policies', zorder=20)
             cbar = plt.colorbar(scat, ax=ax1, label=f"Score ({performance_func.__name__})")
             ax1.set_xlabel(self.issue_1)
             ax1.set_ylabel(self.issue_2)
             ax1.set_title('Genetic Algorithm Evolution')
-            ax1.legend()
+            ax1.legend(borderaxespad=0.1)
 
             def update(frame):
                 gen_pop = np.array(history[frame])
                 scat.set_offsets(gen_pop[:,:2])
                 scat.set_array(gen_pop[:,2])
-                ax1.set_title(f'Policies Attempted (Generation {frame+1})')
+                ax1.set_title(f'Attempted New Policies (Generation {frame+1})')
 
                 # Update average score plot
                 ax2.clear()
