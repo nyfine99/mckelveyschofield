@@ -35,6 +35,7 @@ This project supports:
    ```
 3. Install dependencies
    ```
+   pip install deap
    pip install matplotlib
    pip install numba
    pip install numpy
@@ -42,6 +43,8 @@ This project supports:
    pip install pandas
    pip install scipy
    ```
+   
+   Separately, ffmpeg will also require installation to get any of the animations working.
 
 ## Usage
 
