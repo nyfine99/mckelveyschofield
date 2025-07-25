@@ -5,6 +5,7 @@ import random
 from deap import base, creator, tools, algorithms
 import matplotlib.animation as animation
 from matplotlib.colors import to_rgb
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
@@ -715,9 +716,14 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         stats.register("min", np.min)
 
         history = []
+        avg_scores_history = []
+        max_scores_history = []
         def record_history(pop):
             # Save a copy of the population and their fitnesses
             history.append([(ind[0], ind[1], ind.fitness.values[0]) for ind in pop])
+            scores = [ind.fitness.values[0] for ind in pop]
+            avg_scores_history.append(np.mean(scores))
+            max_scores_history.append(np.max(scores))
 
         # Run the genetic algorithm
         for gen in range(ngen):
@@ -736,52 +742,54 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         y = final_pop[:,1]
         scores = final_pop[:,2]
 
-        # # Plot heatmap of final population
-        # fig, ax = plt.subplots(figsize=(8,6))
-        # sc = ax.scatter(x, y, c=scores, cmap='viridis', s=60, edgecolor='k')
-        # plt.colorbar(sc, ax=ax, label='Performance Score')
-        # ax.set_xlabel(self.issue_1)
-        # ax.set_ylabel(self.issue_2)
-        # ax.set_title('Genetic Algorithm: Best-Performing Policy Insertion')
-        # # Overlay voters
-        # voter_arr = np.array([v.ideal_policy.values for v in self.voters])
-        # ax.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
-        # # Overlay existing policies
-        # for idx, p in enumerate(policies):
-        #     ax.scatter(p.values[0], p.values[1], c='r', s=80, edgecolor='k', marker='*', label='Existing Policy' if idx==0 else None, zorder=11)
-        # ax.legend()
-        # if output_files_base_name:
-        #     plt.savefig(f"{output_folder}/{output_files_base_name}_heatmap.png", bbox_inches='tight')
-        #     print(f"Genetic search heatmap saved to {output_folder}/{output_files_base_name}_heatmap.png")
-        # if show_outputs:
-        #     plt.show()
-        # plt.close(fig)
-
         # Optional animation
         if animate_genetic_search:
-            from matplotlib.animation import FuncAnimation
-            fig, ax = plt.subplots(figsize=(8,6))
+            fig = plt.figure(figsize=(12, 6))
+            gs = gridspec.GridSpec(2, 2, width_ratios=[3,1], height_ratios=[1,1], wspace=0.3, hspace=0.3)
             voter_arr = np.array([v.ideal_policy.values for v in self.voters])
-            ax.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
+            ax1 = fig.add_subplot(gs[:,0])
+            ax2 = fig.add_subplot(gs[0,1])
+            ax3 = fig.add_subplot(gs[1,1])
+            ax1.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
             for idx, p in enumerate(policies):
-                ax.scatter(p.values[0], p.values[1], c='gray', s=100, edgecolor='k', marker='o', label='Existing Policy' if idx==0 else None, zorder=11)
-            # Compute min/max score across all generations for colorbar
+                ax1.scatter(p.values[0], p.values[1], c='gray', s=100, edgecolor='k', marker='o', label='Existing Policy' if idx==0 else None, zorder=11)
             all_scores = np.concatenate([np.array(gen)[:,2] for gen in history])
-            vmin, vmax = np.min(all_scores), np.max(all_scores)   # maybe I should take the 90th percentile instead of the min (or even max) for better visualization
-            scat = ax.scatter([], [], c=[], cmap='viridis', s=60, edgecolor='k', vmin=vmin, vmax=vmax, zorder=20)  # zorder is to make sure the scatters are on top of the voters and policies
-            cbar = plt.colorbar(scat, ax=ax, label=performance_func.__name__)  # formerly label='Performance Score'
-            ax.set_xlabel(self.issue_1)
-            ax.set_ylabel(self.issue_2)
-            ax.set_title('Genetic Algorithm Evolution')
-            ax.legend()
+            vmin, vmax = np.min(all_scores), np.max(all_scores)
+            scat = ax1.scatter([], [], c=[], cmap='viridis', s=60, edgecolor='k', vmin=vmin, vmax=vmax, zorder=20)
+            cbar = plt.colorbar(scat, ax=ax1, label=f"Score ({performance_func.__name__})")
+            ax1.set_xlabel(self.issue_1)
+            ax1.set_ylabel(self.issue_2)
+            ax1.set_title('Genetic Algorithm Evolution')
+            ax1.legend()
+
             def update(frame):
                 gen_pop = np.array(history[frame])
                 scat.set_offsets(gen_pop[:,:2])
                 scat.set_array(gen_pop[:,2])
-                ax.set_title(f'Genetic Algorithm Evolution (Generation {frame+1})')
-                # TODO: add average and best scores over time at the bottom of the plot
-                return scat
-            anim = FuncAnimation(fig, update, frames=len(history), interval=300)
+                ax1.set_title(f'Policies Attempted (Generation {frame+1})')
+
+                # Update average score plot
+                ax2.clear()
+                ax2.plot(avg_scores_history[:frame+1], label='Average Score', color='blue')
+                ax2.set_ylabel('Average Score')
+                ax2.set_title('Average Score per Generation')
+                ax2.legend()
+                ax2.grid(True)
+                ax2.set_ylim(np.min(avg_scores_history), np.max(avg_scores_history))
+
+                # Update max score plot
+                ax3.clear()
+                ax3.plot(max_scores_history[:frame+1], label='Max Score', color='orange')
+                ax3.set_ylabel('Max Score')
+                ax3.set_xlabel('Generation')
+                ax3.set_title('Max Score per Generation')
+                ax3.legend()
+                ax3.grid(True)
+                ax3.set_ylim(np.min(max_scores_history), np.max(max_scores_history))
+
+                return scat, ax2, ax3
+
+            anim = animation.FuncAnimation(fig, update, frames=len(history), interval=300)
             if output_files_base_name:
                 anim.save(f"{output_folder}/{output_files_base_name}_genetic_search.mp4", writer='ffmpeg', fps=5)
             if show_outputs:
