@@ -16,7 +16,7 @@ from election_dynamics.election_dynamics import ElectionDynamics
 from voters.voter import Voter
 from policies.policy import Policy
 from utility_functions.evaluation_functions import ranked_choice_preference
-from utility_functions.genetic_performance_functions import min_mov
+from utility_functions.genetic_performance_functions import mov_final_round
 
 COLORS_FOR_PLOTTING = ['blue', 'red', 'orange', 'green', 'purple', 'yellow', 'brown', 'pink', 'gray']
 
@@ -182,7 +182,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
     ):
         # setup
         if self.evaluation_function != ranked_choice_preference:
-            print("Warning: this animation is only supported for RCV elections.")
+            print("Warning: election animation is only supported for RCV elections.")
             return
         if len(policies) < 2:
             print("Not enough policies to hold an election!")
@@ -403,7 +403,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         Note: the sankey library is not used here, as its capabilities do not allow for the desired visualization.
         """
         if self.evaluation_function != ranked_choice_preference:
-            print("Warning: this animation is only supported for RCV elections.")
+            print("Warning: election sankey diagram creation is only supported for RCV elections.")
             return
         if len(policies) < 2:
             print("Not enough policies to hold an election!")
@@ -663,7 +663,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
     def genetic_search_best_policy(
         self,
         policies,
-        performance_func=min_mov,
+        performance_func=mov_final_round,
         pop_size=100,
         ngen=40,
         cxpb=0.5,
@@ -678,6 +678,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         animate_best_policy_election=False,
         plot_best_policy_sankey=False,
         show_outputs=False,
+        stop_at_majority=True,
     ) -> tuple[Policy, float]:
         """
         Uses a genetic algorithm (DEAP) and a user-defined performance function to find the best-performing policy
@@ -712,7 +713,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             # Get round-by-round vote matrix
             preferences = self.tabulate_votes(test_policies)
             # Use the same evaluation function as animate_election (RCV)
-            vote_matrix = self.evaluation_function(preferences, stop_at_majority=False, output_vote_counts=True)
+            vote_matrix = self.evaluation_function(preferences, stop_at_majority=stop_at_majority, output_vote_counts=True)
             score = performance_func(np.array(vote_matrix))
             return (score,)
 
@@ -813,9 +814,9 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         best_genetic_policy_fitness = hof[0].fitness.values[0]
 
         if animate_best_policy_election:
-            self.animate_election(policies + [best_genetic_policy], output_folder=output_folder, filename=f"{output_files_base_name}_genetic_policy_election")
+            self.animate_election(policies + [best_genetic_policy], output_folder=output_folder, filename=f"{output_files_base_name}_genetic_policy_election", stop_at_majority=stop_at_majority)
 
         if plot_best_policy_sankey:
-            self.create_election_sankey_diagram(policies + [best_genetic_policy], output_folder=output_folder, filename=f"{output_files_base_name}_genetic_policy_sankey")
+            self.create_election_sankey_diagram(policies + [best_genetic_policy], output_folder=output_folder, filename=f"{output_files_base_name}_genetic_policy_sankey", stop_at_majority=stop_at_majority)
 
         return best_genetic_policy, best_genetic_policy_fitness

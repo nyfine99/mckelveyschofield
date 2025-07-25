@@ -20,6 +20,8 @@ def tiebreak_status_quo_preference():
 
 def first_past_the_post(
     preferences: np.ndarray,
+    stop_at_majority: bool = True,  # not used in FPTP, but allows for compatibility with RCV
+    output_vote_counts: bool = False,
 ) -> int:
     """
     First-past-the-post (FPTP) from sorted preferences.
@@ -41,13 +43,16 @@ def first_past_the_post(
     # get the current count for each policy
     counts = np.bincount(first_choices, minlength=num_policies)
 
+    if output_vote_counts:
+        return np.array([counts])  # returning as counts by round, to be consistent with RCV
+
     return counts.argmax()
 
 
 def ranked_choice_preference(
     preferences: np.ndarray,
     stop_at_majority: bool = True,
-    output_vote_counts: bool = False
+    output_vote_counts: bool = False,
 ) -> Union[int, np.ndarray]:
     """
     Ranked Choice Voting (RCV) from sorted preferences.
@@ -138,6 +143,7 @@ def ranked_choice_preference(
         # eliminate worst-performing policy
         active[to_eliminate] = False
 
+# TODO: not currently consistent with the other RCV function; make consistent
 @njit
 def fast_rcv_many_voters(preferences: np.ndarray):
     """
