@@ -682,8 +682,8 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
     ) -> tuple[Policy, float]:
         """
         Uses a genetic algorithm (DEAP) and a user-defined performance function to find the best-performing policy
-        to insert into an election, given pre-existing policies, as well as that policy's score.
-        The user provides a performance_func that takes the round-by-round vote matrix and returns a score (higher is better).
+        to insert into an election given pre-existing policies. "Performance" is defined by a provided performance_func
+        that takes the round-by-round vote matrix and returns a score (higher is better).
         Optionally animates the evolution, and plots the best policy's election and sankey diagram.
         """
         # Setup DEAP
