@@ -35,7 +35,7 @@ if __name__ == "__main__":
         plot_best_policy_sankey=True
     )
 
-    # obtaining winmap and [erforming genetic search for best policy FPTP
+    # obtaining winmap and performing genetic search for best policy FPTP
     fptp_electorate.gridsearch_policy_winmap(all_policies_list, output_filename="output/echelon_electorate_fptp_winmap.png")
     fptp_electorate.genetic_search_best_policy(
         all_policies_list, 
