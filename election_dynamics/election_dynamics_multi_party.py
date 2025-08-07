@@ -1,18 +1,22 @@
 from collections import Counter
 import copy
+import random
+
+from deap import base, creator, tools, algorithms
 import matplotlib.animation as animation
 from matplotlib.colors import to_rgb
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 from scipy.interpolate import griddata
 from scipy.ndimage import gaussian_filter
 
-
 from election_dynamics.election_dynamics import ElectionDynamics
 from voters.voter import Voter
 from policies.policy import Policy
 from utility_functions.evaluation_functions import ranked_choice_preference
+from utility_functions.genetic_performance_functions import mov_final_round
 
 COLORS_FOR_PLOTTING = ['blue', 'red', 'orange', 'green', 'purple', 'yellow', 'brown', 'pink', 'gray']
 
@@ -178,7 +182,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
     ):
         # setup
         if self.evaluation_function != ranked_choice_preference:
-            print("Warning: this animation is only supported for RCV elections.")
+            print("Warning: election animation is only supported for RCV elections.")
             return
         if len(policies) < 2:
             print("Not enough policies to hold an election!")
@@ -216,12 +220,12 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             total_active_votes = counts[active].sum()
             ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
 
-             # determining if the stopping condition has been met
+            # determining if the stopping condition has been met
             for i in np.flatnonzero(active):
                 if (
                     stop_at_majority and counts[i] > total_active_votes / 2
                 ) or (
-                    not stop_at_majority and len(active) == 2  and counts[i] > total_active_votes / 2
+                    len(active[active == True]) == 2
                 ):
                     done["stop"] = True
 
@@ -308,12 +312,26 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             plt.ylabel(f"Position on {self.issue_2}")
 
             if plot_verbose:
-                # sorting voters_by_vote by first round vote count
+                # sorting voters_by_vote by first-choice vote count
                 description_string = "In first-choice selections"
-                sorted_items = sorted(voters_by_vote.items(), key=lambda item: len(item[1]), reverse=True)
+
+                # sorting voters_by_vote by first-choice vote count, then by original first-choice vote count,
+                # then by policy index; lowest policy index wins in case of ties
+                policy_idx_to_votes_now_and_first_round = {}
+                for policy_idx in voters_by_vote.keys():
+                    policy_idx_to_votes_now_and_first_round[policy_idx] = (
+                        len(voters_by_vote[policy_idx]), original_first_round_counts[policy_idx]
+                    )
+                sorted_items = sorted(
+                    policy_idx_to_votes_now_and_first_round.items(), 
+                    key=lambda item: (-item[1][0], -item[1][1], item[0]), 
+                    reverse=False
+                )
+
+                # changing sorted_items to contain (policy_idx, first-choice vote count)
                 for i in range(len(sorted_items)):
-                    sorted_items[i] = list(sorted_items[i])
-                    sorted_items[i][1] = len(sorted_items[i][1])
+                    sorted_items[i] = list(sorted_items[i])  # making it mutable
+                    sorted_items[i][1] = sorted_items[i][1][0]
                 top_policy_idx = sorted_items[0][0]
                 top_policy_name = policy_names[top_policy_idx]
                 top_policy_votes = sorted_items[0][1]
@@ -352,15 +370,20 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                 )
             
             # eliminating losers
+            # finding which policy(s) received the least number of votes
             min_votes = counts[active].min()
             lowest = np.flatnonzero((counts == min_votes) & active)
 
             if len(lowest) > 1:
+                # applying tiebreak 1 (original first-round support)
                 orig_support = original_first_round_counts[lowest]
                 min_orig = orig_support.min()
                 lowest = lowest[orig_support == min_orig]
 
-            to_eliminate = lowest.min()
+            # applying tiebreak 2 (smallest index wins) if needed
+            to_eliminate = lowest.max()
+
+            # eliminate worst-performing policy
             active[to_eliminate] = False
 
         def init():
@@ -399,7 +422,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         Note: the sankey library is not used here, as its capabilities do not allow for the desired visualization.
         """
         if self.evaluation_function != ranked_choice_preference:
-            print("Warning: this animation is only supported for RCV elections.")
+            print("Warning: election sankey diagram creation is only supported for RCV elections.")
             return
         if len(policies) < 2:
             print("Not enough policies to hold an election!")
@@ -655,3 +678,183 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         else:
             plt.show()
         plt.close(fig)
+
+    def genetic_search_best_policy(
+        self,
+        policies,
+        performance_func=mov_final_round,
+        new_policy_name="Genetic Policy",
+        pop_size=100,
+        ngen=40,
+        cxpb=0.5,
+        mutpb=0.2,
+        x_bounds=None,
+        y_bounds=None,
+        sigma_x=None,
+        sigma_y=None,
+        output_folder="output",
+        output_files_base_name=None,
+        animate_genetic_search=False,
+        animate_best_policy_election=False,
+        plot_best_policy_sankey=False,
+        show_outputs=False,
+        stop_at_majority=True,
+    ) -> tuple[Policy, float]:
+        """
+        Uses a genetic algorithm (DEAP) and a user-defined performance function to find the best-performing policy
+        to insert into an election given pre-existing policies. "Performance" is defined by a provided performance_func
+        that takes the round-by-round vote matrix and returns a score (higher is better).
+        Optionally animates the evolution, and plots the best policy's election and sankey diagram.
+        """
+        # obtain search bounds and mutation sigma, if not provided
+        voter_arr = np.array([v.ideal_policy.values for v in self.voters])
+        if x_bounds is None:
+            x_bounds = [voter_arr[:, 0].min(), voter_arr[:, 0].max()]
+        if y_bounds is None:
+            y_bounds = [voter_arr[:, 1].min(), voter_arr[:, 1].max()]
+        if sigma_x is None:
+            sigma_x = (x_bounds[1] - x_bounds[0]) / 20  # baseline assumption - 5% of the range
+        if sigma_y is None:
+            sigma_y = (y_bounds[1] - y_bounds[0]) / 20  # baseline assumption - 5% of the range
+        
+        # set up DEAP
+        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+        creator.create("Individual", list, fitness=creator.FitnessMax)
+        toolbox = base.Toolbox()
+        toolbox.register("attr_float_x", random.uniform, x_bounds[0], x_bounds[1])
+        toolbox.register("attr_float_y", random.uniform, y_bounds[0], y_bounds[1])
+        toolbox.register("individual", tools.initCycle, creator.Individual, (toolbox.attr_float_x, toolbox.attr_float_y), n=1)
+        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+        # define a function to evaluate the performance of a new policy
+        def eval_policy(ind):
+            new_policy = Policy(np.array([ind[0], ind[1]]), name="GeneticPolicy")
+            test_policies = policies + [new_policy]
+            # Get round-by-round vote matrix
+            preferences = self.tabulate_votes(test_policies)
+            # Use the same evaluation function as animate_election (RCV)
+            vote_matrix = self.evaluation_function(preferences, stop_at_majority=stop_at_majority, output_vote_counts=True)
+            score = performance_func(np.array(vote_matrix))
+            return (score,)
+
+        toolbox.register("evaluate", eval_policy)
+
+        # mating + mutation + selection parameters
+        toolbox.register("mate", tools.cxBlend, alpha=0.5)
+        toolbox.register("mutate", tools.mutGaussian, mu=(0, 0), sigma=(sigma_x, sigma_y), indpb=0.5)
+        toolbox.register("select", tools.selTournament, tournsize=3)
+
+        # initialize population
+        pop = toolbox.population(n=pop_size)
+
+        # stats collection
+        hof = tools.HallOfFame(1)
+        stats = tools.Statistics(lambda ind: ind.fitness.values)
+        stats.register("avg", np.mean)
+        stats.register("max", np.max)
+        stats.register("min", np.min)
+
+        history = []
+        avg_scores_history = []
+        max_scores_history = []
+        def record_history(pop):
+            # save a copy of the population and their fitnesses
+            history.append([(ind[0], ind[1], ind.fitness.values[0]) for ind in pop])
+            scores = [ind.fitness.values[0] for ind in pop]
+            avg_scores_history.append(np.mean(scores))
+            max_scores_history.append(np.max(scores))
+
+        # run the genetic algorithm
+        for gen in range(ngen):
+            offspring = algorithms.varAnd(pop, toolbox, cxpb, mutpb)
+            fits = toolbox.map(toolbox.evaluate, offspring)
+            for fit, ind in zip(fits, offspring):
+                ind.fitness.values = fit
+            pop = toolbox.select(offspring, k=len(pop))
+            hof.update(pop)
+            record_history(pop)
+            print(f"Generation {gen+1}/{ngen} - Best score: {hof[0].fitness.values[0]:.3f}")
+
+        # final population - not used for now
+        # final_pop = np.array([[ind[0], ind[1], ind.fitness.values[0]] for ind in pop])
+        # x = final_pop[:,0]
+        # y = final_pop[:,1]
+        # scores = final_pop[:,2]
+
+        # optional animation
+        if animate_genetic_search:
+            # animation will contain 3 subplots: the policy space (ax1), the average score (ax2), 
+            # and the max score (ax3); all as the generations progress
+            fig = plt.figure(figsize=(12, 6))
+            gs = gridspec.GridSpec(2, 2, width_ratios=[3,1], height_ratios=[1,1], wspace=0.3, hspace=0.3)
+            ax1 = fig.add_subplot(gs[:,0])
+            ax2 = fig.add_subplot(gs[0,1])
+            ax3 = fig.add_subplot(gs[1,1])
+            ax1.scatter(voter_arr[:, 0], voter_arr[:, 1], c='k', s=10, label='Voters', zorder=10)
+            for idx, p in enumerate(policies):
+                ax1.scatter(p.values[0], p.values[1], c='darkgray', s=100, edgecolor='k', marker='o', label='Existing Policies' if idx==0 else None, zorder=11)
+            all_scores = np.concatenate([np.array(gen)[:,2] for gen in history])
+            vmin, vmax = np.min(all_scores), np.max(all_scores)
+            scat = ax1.scatter([], [], c=[], cmap='viridis', s=60, edgecolor='k', vmin=vmin, vmax=vmax, label='Attempted New Policies', zorder=20)
+            cbar = plt.colorbar(scat, ax=ax1, label=f"Score ({performance_func.__name__})")
+            ax1.set_xlabel(self.issue_1)
+            ax1.set_ylabel(self.issue_2)
+            ax1.set_title('Genetic Algorithm Evolution')
+            ax1.legend(borderaxespad=0.1)
+
+            def update(frame):
+                # update policy space plot
+                gen_pop = np.array(history[frame])
+                scat.set_offsets(gen_pop[:,:2])
+                scat.set_array(gen_pop[:,2])
+                ax1.set_title(f'Attempted New Policies (Generation {frame+1})')
+
+                # update average score plot
+                ax2.clear()
+                ax2.plot(avg_scores_history[:frame+1], label='Average Score', color='blue')
+                ax2.set_ylabel('Average Score')
+                ax2.set_title('Average Score per Generation')
+                ax2.legend()
+                ax2.grid(True)
+                ax2.set_ylim(np.min(avg_scores_history), np.max(avg_scores_history))
+
+                # update max score plot
+                ax3.clear()
+                ax3.plot(max_scores_history[:frame+1], label='Max Score', color='orange')
+                ax3.set_ylabel('Max Score')
+                ax3.set_xlabel('Generation')
+                ax3.set_title('Max Score per Generation')
+                ax3.legend()
+                ax3.grid(True)
+                ax3.set_ylim(np.min(max_scores_history), np.max(max_scores_history))
+
+                return scat, ax2, ax3
+
+            # run the animation
+            anim = animation.FuncAnimation(fig, update, frames=len(history), interval=300)
+            if output_files_base_name:
+                anim.save(f"{output_folder}/{output_files_base_name}_genetic_search.mp4", writer='ffmpeg', fps=5)
+            if show_outputs:
+                plt.show()
+            plt.close(fig)
+
+        # obtain the best policy and its fitness
+        best_genetic_policy = Policy(hof[0], new_policy_name)
+        best_genetic_policy_fitness = hof[0].fitness.values[0]
+
+        # optional animation of an election with the genetic policy and the existing policies
+        if animate_best_policy_election:
+            self.animate_election(
+                policies + [best_genetic_policy], 
+                output_folder=output_folder, 
+                filename=f"{output_files_base_name}_genetic_policy_election", 
+                stop_at_majority=stop_at_majority
+            )
+
+        # optional plot of the sankey diagram for the election with 
+        # the genetic policy and the existing policies
+        if plot_best_policy_sankey:
+            self.create_election_sankey_diagram(policies + [best_genetic_policy], output_folder=output_folder, filename=f"{output_files_base_name}_genetic_policy_sankey", stop_at_majority=stop_at_majority)
+
+        # return the best policy and its fitness
+        return best_genetic_policy, best_genetic_policy_fitness

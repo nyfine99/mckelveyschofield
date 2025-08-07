@@ -25,6 +25,22 @@ if __name__ == "__main__":
     rcv_electorate = create_us_electorate_multiparty_rcv()
     fptp_electorate = create_us_electorate_echelon_multiparty_fptp()
 
-    # obtaining winmaps
+    # obtaining winmap and performing genetic search for best policy RCV
     rcv_electorate.gridsearch_policy_winmap(all_policies_list, output_filename="output/echelon_electorate_rcv_winmap.png")
+    rcv_electorate.genetic_search_best_policy(
+        all_policies_list, 
+        output_files_base_name="echelon_electorate_rcv", 
+        animate_genetic_search=True, 
+        animate_best_policy_election=True, 
+        plot_best_policy_sankey=True
+    )
+
+    # obtaining winmap and performing genetic search for best policy FPTP
     fptp_electorate.gridsearch_policy_winmap(all_policies_list, output_filename="output/echelon_electorate_fptp_winmap.png")
+    fptp_electorate.genetic_search_best_policy(
+        all_policies_list, 
+        output_files_base_name="echelon_electorate_fptp", 
+        animate_genetic_search=True, 
+        animate_best_policy_election=False, 
+        plot_best_policy_sankey=False
+    )

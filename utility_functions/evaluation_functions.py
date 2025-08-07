@@ -20,6 +20,8 @@ def tiebreak_status_quo_preference():
 
 def first_past_the_post(
     preferences: np.ndarray,
+    stop_at_majority: bool = True,  # not used in FPTP, but allows for compatibility with RCV
+    output_vote_counts: bool = False,
 ) -> int:
     """
     First-past-the-post (FPTP) from sorted preferences.
@@ -41,13 +43,16 @@ def first_past_the_post(
     # get the current count for each policy
     counts = np.bincount(first_choices, minlength=num_policies)
 
+    if output_vote_counts:
+        return np.array([counts])  # returning as counts by round, to be consistent with RCV
+
     return counts.argmax()
 
 
 def ranked_choice_preference(
     preferences: np.ndarray,
     stop_at_majority: bool = True,
-    output_vote_counts: bool = False
+    output_vote_counts: bool = False,
 ) -> Union[int, np.ndarray]:
     """
     Ranked Choice Voting (RCV) from sorted preferences.
@@ -95,16 +100,33 @@ def ranked_choice_preference(
         if output_vote_counts:
             vote_counts_by_round.append(counts.copy())
 
-        # determining if any policy can be declared the winner
-        for i in np.flatnonzero(active):
-            if (
-                stop_at_majority and counts[i] > total_active_votes / 2
-            ) or (
-                not stop_at_majority and len(active[active == True]) == 2  and counts[i] > total_active_votes / 2
-            ):
-                if output_vote_counts:
-                    return np.array(vote_counts_by_round)
-                return i
+        # determining if any policy can/must be declared the winner
+        if (
+            stop_at_majority and max(counts) > total_active_votes / 2
+        ) or (
+            len(active[active == True]) == 2
+        ):
+            if output_vote_counts:
+                return np.array(vote_counts_by_round)
+            
+            # we need to determine which policy is the winner
+            initial_winner = counts.argmax()
+            if counts[initial_winner] > total_active_votes / 2:
+                # one policy has more than half the votes, so it is the winner
+                return initial_winner
+
+            # no policy has more than half the votes, so we have a tie, and need to apply tiebreaks
+            max_votes = counts[active].max()
+            greatest = np.flatnonzero((counts == max_votes) & active)
+
+            # applying tiebreak 1 (original first-round support)
+            orig_support = original_first_round_counts[greatest]
+            max_orig = orig_support.max()
+            greatest = greatest[orig_support == max_orig]
+
+            # applying tiebreak 2 (smallest index wins) if needed
+            return greatest.min()
+
 
         # finding which policy(s) received the least number of votes
         min_votes = counts[active].min()
@@ -116,12 +138,13 @@ def ranked_choice_preference(
             min_orig = orig_support.min()
             lowest = lowest[orig_support == min_orig]
 
-        # due to how argmax works, tiebreak 2 (smallest index) will have already been applied if needed
-        to_eliminate = lowest.min()
+        # applying tiebreak 2 (smallest index wins) if needed
+        to_eliminate = lowest.max()
 
         # eliminate worst-performing policy
         active[to_eliminate] = False
 
+# TODO: not currently consistent with the other RCV function; make consistent
 @njit
 def fast_rcv_many_voters(preferences: np.ndarray):
     """

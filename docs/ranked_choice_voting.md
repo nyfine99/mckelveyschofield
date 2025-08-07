@@ -11,7 +11,10 @@ This module provides tools for simulating and visualizing RCV elections in multi
   Animate the rounds of an RCV election, showing how votes transfer and which candidates are eliminated.
 
 - **Grid Search Policy Winmap:**  
-  Visualize which policy would win if a new policy were inserted at any point in the policy space.
+  Visualize which policy would win if a new policy were inserted at any point in the policy space, given a list of previously-competing policies.
+
+- **Genetic Search Best Policy:**  
+  Run a genetic search to determine which new policy would perform best if inserted into the policy space, given a list of previously-competing policies.
 
 ## Example Visualizations
 
