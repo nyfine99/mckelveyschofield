@@ -225,7 +225,7 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                 if (
                     stop_at_majority and counts[i] > total_active_votes / 2
                 ) or (
-                    len(active) == 2
+                    len(active[active == True]) == 2
                 ):
                     done["stop"] = True
 
@@ -312,12 +312,26 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
             plt.ylabel(f"Position on {self.issue_2}")
 
             if plot_verbose:
-                # sorting voters_by_vote by first round vote count
+                # sorting voters_by_vote by first-choice vote count
                 description_string = "In first-choice selections"
-                sorted_items = sorted(voters_by_vote.items(), key=lambda item: len(item[1]), reverse=True)
+
+                # sorting voters_by_vote by first-choice vote count, then by original first-choice vote count,
+                # then by policy index; lowest policy index wins in case of ties
+                policy_idx_to_votes_now_and_first_round = {}
+                for policy_idx in voters_by_vote.keys():
+                    policy_idx_to_votes_now_and_first_round[policy_idx] = (
+                        len(voters_by_vote[policy_idx]), original_first_round_counts[policy_idx]
+                    )
+                sorted_items = sorted(
+                    policy_idx_to_votes_now_and_first_round.items(), 
+                    key=lambda item: (-item[1][0], -item[1][1], item[0]), 
+                    reverse=False
+                )
+
+                # changing sorted_items to contain (policy_idx, first-choice vote count)
                 for i in range(len(sorted_items)):
-                    sorted_items[i] = list(sorted_items[i])
-                    sorted_items[i][1] = len(sorted_items[i][1])
+                    sorted_items[i] = list(sorted_items[i])  # making it mutable
+                    sorted_items[i][1] = sorted_items[i][1][0]
                 top_policy_idx = sorted_items[0][0]
                 top_policy_name = policy_names[top_policy_idx]
                 top_policy_votes = sorted_items[0][1]
@@ -356,15 +370,20 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
                 )
             
             # eliminating losers
+            # finding which policy(s) received the least number of votes
             min_votes = counts[active].min()
             lowest = np.flatnonzero((counts == min_votes) & active)
 
             if len(lowest) > 1:
+                # applying tiebreak 1 (original first-round support)
                 orig_support = original_first_round_counts[lowest]
                 min_orig = orig_support.min()
                 lowest = lowest[orig_support == min_orig]
 
-            to_eliminate = lowest.min()
+            # applying tiebreak 2 (smallest index wins) if needed
+            to_eliminate = lowest.max()
+
+            # eliminate worst-performing policy
             active[to_eliminate] = False
 
         def init():
