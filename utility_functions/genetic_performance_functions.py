@@ -2,6 +2,7 @@ import numpy as np
 
 def min_mov_rcv(vote_matrix):
     # minimum margin of victory in each round; only compatible with RCV
+    # assumes that the new policy is the last policy in the vote matrix
     margins = []
     for row, round_votes in enumerate(vote_matrix):
         new_policy_vote_count = round_votes[-1]
@@ -9,12 +10,15 @@ def min_mov_rcv(vote_matrix):
         new_policy_performance = new_policy_vote_count - sorted_votes[0]  # votes above eliminated policy
         margins.append(new_policy_performance)
         if new_policy_performance <= 0:
+            # the new policy has been eliminated, or tied in votes with an eliminated policy
+            # either way, 0 will be the minimum, so can stop here
             break
 
     return min(margins) if margins else 0
 
 def mov_final_round(vote_matrix):
     # margin of victory in final round; compatible with both FPTP and RCV
+    # assumes that the new policy is the last policy in the vote matrix
     final_round_votes = vote_matrix[-1,:]
     if final_round_votes[-1] == 0:
         # new candidate did not make it to the final round
@@ -25,6 +29,6 @@ def mov_final_round(vote_matrix):
     if argmax_index != len(final_round_votes) - 1:
         return 0 
 
-    # new candidate won the final round, return MOV
+    # new candidate won the final round or tied, return MOV
     sorted_votes = np.sort(final_round_votes)
     return sorted_votes[-1] - sorted_votes[-2]
