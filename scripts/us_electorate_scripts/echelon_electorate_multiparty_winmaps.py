@@ -41,6 +41,6 @@ if __name__ == "__main__":
         all_policies_list, 
         output_files_base_name="echelon_electorate_fptp", 
         animate_genetic_search=True, 
-        animate_best_policy_election=True, 
-        plot_best_policy_sankey=True
+        animate_best_policy_election=False, 
+        plot_best_policy_sankey=False
     )
