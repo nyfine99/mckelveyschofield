@@ -112,9 +112,10 @@ def ranked_choice_preference(
             # we need to determine which policy is the winner
             initial_winner = counts.argmax()
             if counts[initial_winner] > total_active_votes / 2:
+                # one policy has more than half the votes, so it is the winner
                 return initial_winner
 
-            # otherwise, we have a tie, and need to apply tiebreaks
+            # no policy has more than half the votes, so we have a tie, and need to apply tiebreaks
             max_votes = counts[active].max()
             greatest = np.flatnonzero((counts == max_votes) & active)
 
