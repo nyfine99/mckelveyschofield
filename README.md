@@ -1,76 +1,167 @@
-# mckelveyschofield
+# McKelvey-Schofield Chaos Theorem & Other Electoral Dynamics Simulation
 
-![run_1](https://github.com/user-attachments/assets/02606108-7236-42b9-b1e4-841a8c6247be)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)]()
 
-## Description
+## Project Overview
 
-The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2%80%93Schofield_chaos_theorem) guarantees that, provided certain conditions are met, a set of voters with multidimensional preferences can be made to choose any policy over any other through a series of binary choices. This repository contains scripts capable of demostrating this visually through several different types of plots and animations, as well as providing the infrastructure for future expansions of this project towards exploring other facets of electoral weirdness.
+This repository demonstrates advanced electoral dynamics through computational simulations of the **McKelvey-Schofield Chaos Theorem** and **Ranked-choice Voting system**. The project showcases implementation of mathematical theory, data visualization, and algorithmic implementations in political science.
 
-Additionally, this project contains scripts capable of simulating ranked-choice voting, and visualizing the results of such elections through by-round animations and Sankey diagrams. And again, the infrastructure is provided to enable future expansions to explore other aspects of ranked-choice voting.
+### What is the McKelvey-Schofield Chaos Theorem?
 
-## Features
+The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2%80%93Schofield_chaos_theorem) proves that in multidimensional policy spaces, an agenda setter can (under fairly general conditions on voter preferences) manipulate voters to choose any policy over any other through strategic sequencing of binary choices. This project provides interactive visualizations and computational tools to explore this fascinating result.
 
-Assuming:
-- Voters and candidates/policies are represented as points in an n-dimensional Euclidean policy space (typically 2D).
-- Voters have full knowledge of their own preferences and the positions of all candidates/policies.
-- Voters vote sincerely for the option that gives them the highest utility (or, in the case of ranked-choice voting, rank their options by greatest utility).
+## Key Features
 
-This project supports:
-- Modeling and visualizing two-party and ranked-choice voting elections with customizable voter types (currently assuming rational voters with simple Manhattan or Euclidean distance-based utility).
-- Identifying the set of policies that can defeat a given or incumbent policy via majority rule.
-- Finding a path, through a sequence of forced binary choices presented to voters, between any two policy positions in a two-dimensional plane (as McKelvey-Schofield guarantees possible, in most cases).
-- Applying these tools to real-world voter data (though not necessarily for real-world conclusions, given the simplified assumptions of the model; rather, to explore its implications and structure).
+### Electoral Simulations
+- **Two-party elections** with customizable voter distributions
+- **Multi-party elections** with complex preference structures
+- **Ranked-choice voting** with round-by-round analysis
+- **Real-world data integration** using US electorate datasets
 
-**See the `docs` folder for a deeper dive into the capabilities offered in this repository!**
+### Implementation of Mathematical Theory
+- **Voter choice** in 2D Euclidean and Manhattan geometries
+- **Winset computation** - finding the set of policies that can defeat incumbents
+- **McKelvey-Schofield pathfinding** - strategic policy transition sequences for the agenda setter
+- **Electoral strategy optimization** in a ranked-choice voting system
 
-## Installation
+### Advanced Visualizations
+- **Round-by-round animations** of individual voter distribution in ranked-choice elections
+- **Sankey diagrams** for ranked-choice voting flows
+- **Policy space heatmaps** to show the ability of newcomer policies to defeat incumbents
+- **Path trajectory plots and animations** showing strategic policy transitions for an agenda setter
 
-1. Clone the repository:
-   ```
-   https://github.com/nyfine99/mckelveyschofield.git
-   ```
-2. Navigate to the project directory:
-   ```
-   cd mckelveyschofield
-   ```
-3. Install dependencies
-   ```
-   pip install deap
-   pip install matplotlib
-   pip install numba
-   pip install numpy
-   pip install ordered_set
-   pip install pandas
-   pip install scipy
-   ```
-   
-   Separately, ffmpeg will also require installation to get any of the animations working.
+## Quick Start
 
-## Usage
+### Prerequisites
+- Python 3.8+
+- FFmpeg (for animations)
 
-All of the scripts in the `scripts` folder provide a good outline for usage. To run a script, for example, `euclidean_electorate.py`, run
+### Installation
 
-`python -m scripts.euclidean_electorate` 
+```bash
+# Clone the repository
+git clone https://github.com/nyfine99/mckelveyschofield.git
+cd mckelveyschofield
 
-in your terminal.
+# Install dependencies
+pip install -r requirements.txt
+```
 
-To run many animations with saved results, use one of the multirun files. For example, to run `multirun_euclidean.py`, run
+### Basic Usage
 
-`python -m scripts.multirun_euclidean`
+```python
+# Run a simple electoral simulation
+python -m scripts.euclidean_electorate
 
-in your terminal.
+# Generate multiple simulations with animations
+python -m scripts.multirun_euclidean
 
-Note: for scripts which output images and/or animations, you will need to create an `output` folder in advance.
+# Explore ranked-choice voting
+python -m scripts.small_rcv_electorate
+```
 
-## Contributing
+## Project Structure
 
-Contributions are welcome! Please open an issue or submit a pull request.
+```
+mckelveyschofield/
+├── election_dynamics/     # Core electoral simulation engine
+├── voters/               # Voter behavior models
+├── policies/             # Policy representation
+├── scripts/              # Ready-to-run examples
+├── utility_functions/    # Mathematical and evaluation tools
+├── docs/                 # Detailed documentation
+├── data/                 # Sample datasets
+└── output/               # Generated visualizations
+```
 
-## Planned Additions
+## Technical Highlights
 
-- McKelvey-Schofield pathfinding capabilities for voters with any weighted L1 or L2 norm utility functions.
-- A justification as to the validity of the winset boundary algorithm.
-- Exploration and possible implementation of non-greedy McKelvey-Schofield pathfinding.
-- Exploration of ranked-choice voting with limits on how many policies voters can put on their ballots, and finding the optimal location to insert a new policy.
+### Advanced Algorithms
+- **Genetic algorithm optimization** to obtain highest-performing newcomer electoral strategy
+- **Lookahead pathfinding** with configurable horizons
+- **Efficient winset boundary computation** using an adapted binary search
+- **Multi-dimensional policy space analysis**
 
-![pets_election](https://github.com/user-attachments/assets/66834c4c-b68e-4000-953d-8683cc284afe)
+### Performance Features
+- **Vectorized computations** using NumPy
+- **Memory-efficient data structures**
+
+### Research Applications
+- **Political science research** and electoral analysis
+- **Game theory** and strategic behavior simulation
+- **Data visualization** and computational social science
+- **Educational demonstrations** of a complex theorem
+
+## Documentation
+
+- **[McKelvey-Schofield Guide](docs/mckelvey_schofield.md)** - deep dive into the theorem and implementations
+- **[Ranked-Choice Voting](docs/ranked_choice_voting.md)** - RCV simulation capabilities
+- **[Gallery](docs/gallery/)** - Visual examples and outputs
+
+## Example Outputs
+
+### Winset Visualization
+![Policy Space](docs/gallery/euclidean_electorate_centrism_winset_boundary.png)
+
+### McKelvey-Schofield Path
+![Strategic Path](docs/gallery/euclidean_electorate_path.png)
+
+### Ranked Choice Voting Flow
+![RCV Sankey](rcv_sankey.png)
+
+## Development
+
+### Running Tests
+```bash
+# Run example scripts to verify functionality
+python -m scripts.euclidean_electorate
+python -m scripts.small_rcv_electorate
+```
+
+### Contributing
+Contributions are welcome! This project demonstrates:
+- **Mathematical simulation** and algorithm implementation
+- **Data visualization** and interactive graphics
+- **Political science** and social choice theory
+- **Python development** with scientific computing
+
+## Ideas for Future Development
+
+- McKelvey-Schofield 
+pathfinding capabilities 
+for voters with any 
+weighted L1 or L2 norm 
+utility functions
+- Increased performance optimization for large-scale electorates
+- (Documentation) A justification as to 
+the validity of the winset 
+boundary algorithm
+- Exploration and possible 
+implementation of 
+non-greedy 
+McKelvey-Schofield 
+pathfinding
+- Exploration of 
+ranked-choice voting with 
+limits on how many 
+policies voters can put on 
+their ballots, and finding 
+the optimal location to 
+insert a new policy
+
+## Contact & Collaboration
+
+This project demonstrates understanding of:
+- **Computational social science**
+- **Mathematical simulation**
+- **Data visualization**
+- **Algorithm design**
+- **Python development**
+
+Feel free to reach out for collaboration opportunities or questions about the implementation!
+
+---
+
+*Built with Python, NumPy, Matplotlib, and computational simulation techniques.*
