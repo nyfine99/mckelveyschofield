@@ -1,3 +1,28 @@
+"""
+Two-Party Electoral Dynamics Implementation
+
+This module implements the core two-party electoral system, serving as the foundation
+for electoral simulations where voters choose between exactly two policy alternatives.
+The ElectionDynamicsTwoParty class extends the abstract base class to provide
+concrete implementations of vote tabulation, policy comparison, and electoral analysis.
+
+Key Features:
+- Binary choice electoral system (two policies compete)
+- Individual voter preference calculation and aggregation
+- Tie-handling mechanism for indifferent voters
+- 2D policy space visualization and analysis
+- Efficient vote counting and utility computation
+
+This class demonstrates fundamental electoral dynamics concepts including:
+- How individual voter utilities translate to aggregate electoral outcomes
+- The relationship between policy positions and voter preferences
+- Visualization of electoral competition in policy space
+- Handling of edge cases like voter indifference
+
+The implementation serves as the base class for more specialized two-party systems
+(e.g., SimpleVoter-specific implementations) while providing the core electoral logic.
+"""
+
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,6 +35,39 @@ from policies.policy import Policy
 
 
 class ElectionDynamicsTwoParty(ElectionDynamics):
+    """
+    Concrete implementation of two-party electoral dynamics.
+    
+    This class implements the core electoral logic for binary choice elections,
+    where voters must choose between exactly two policy alternatives. It provides
+    the foundation for understanding how individual voter preferences aggregate
+    into electoral outcomes through the lens of spatial voting theory.
+    
+    The class handles:
+    - Individual vote calculation based on utility comparisons
+    - Aggregate vote counting and electoral outcome determination
+    - Tie-breaking for indifferent voters
+    - Policy space visualization and analysis
+    - Efficient utility computation and caching
+    
+    This implementation is designed to be extended by more specialized classes
+    (e.g., ElectionDynamicsTwoPartySimpleVoters) while providing the core
+    electoral mechanics that all two-party systems share.
+    
+    Attributes:
+        voters (list[Voter]): collection of voter objects representing the electorate.
+                              each voter must implement the voter interface with
+                              get_utility() method.
+        evaluation_function (callable): function that determines electoral outcomes
+                                       from vote counts. Typically returns the
+                                       winning policy based on vote totals.
+        tiebreak_func (callable, optional): function to handle voter indifference.
+                                            Called when a voter's utilities for
+                                            both policies are equal. Defaults to None.
+        issue_1 (str): Label for the first policy dimension (e.g., "Economic Policy").
+        issue_2 (str): Label for the second policy dimension (e.g., "Social Policy").
+    """
+
     def __init__(
         self,
         voters: list[Voter],
@@ -18,24 +76,97 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         issue_1: str = "Issue 1",
         issue_2: str = "Issue 2",
     ):
-        self.voters = voters
-        self.evaluation_function = evaluation_function
-        self.tiebreak_func = (
-            tiebreak_func  # used when a voter is ambivalent to distribute their vote
-        )
+        """
+        Initialize the two-party electoral dynamics system.
+        
+        Creates a new electoral system configured for binary choice elections.
+        The system is designed to handle any voter type that implements the
+        Voter interface, making it flexible for different preference models.
+        
+        Args:
+            voters (list[Voter]): List of voter objects. Each voter must have
+                                  a get_utility(policy) method that returns a
+                                  numeric utility value for any given policy.
+            evaluation_function (callable): Function that determines electoral
+                                           outcomes from vote counts. Should
+                                           accept a list of vote counts and
+                                           return the winning policy or result.
+            tiebreak_func (callable, optional): Function to resolve voter
+                                               indifference. Called when a
+                                               voter's utilities for both
+                                               policies are equal. If None,
+                                               indifferent voters abstain.
+            issue_1 (str, optional): Human-readable label for the first
+                                     policy dimension. Used for plot labels
+                                     and documentation. Defaults to "Issue 1".
+            issue_2 (str, optional): Human-readable label for the second
+                                     policy dimension. Used for plot labels
+                                     and documentation. Defaults to "Issue 2".
+        
+        Raises:
+            ValueError: If voters list is empty or evaluation_function is None.
+            TypeError: If voters contains objects that don't implement Voter interface.
+        """
+        super().__init__(voters, evaluation_function)
+        
+        # validate inputs
+        if not voters:
+            raise ValueError("Voters list cannot be empty")
+        if evaluation_function is None:
+            raise ValueError("Evaluation function cannot be None")
+        if not all(hasattr(voter, 'get_utility') for voter in voters):
+            raise TypeError("All voters must implement get_utility method")
+        
+        self.tiebreak_func = tiebreak_func  # used when a voter is ambivalent to distribute their vote
         self.issue_1 = issue_1  # Issue 1 name
         self.issue_2 = issue_2  # Issue 2 name
 
     def compare_policies(self, original_policy: Policy, new_policy: Policy):
-        return self.evaluation_function(
-            self.tabulate_votes(original_policy, new_policy)
-        )
+        """
+        Compare two policies to determine which would win in an election.
+        
+        This method implements the core electoral logic by tabulating votes
+        between two policies and then applying the evaluation function to
+        determine the winner. It's the primary method for understanding
+        electoral competition between policy alternatives.
+        
+        Args:
+            original_policy (Policy): The incumbent or status quo policy.
+                                      Represents the current policy position
+                                      that the new policy is challenging.
+            new_policy (Policy): The challenger or proposed new policy.
+                                 Represents the alternative policy that
+                                 voters are considering.
+        
+        Returns:
+            The result depends on the evaluation_function:
+            - For simple majority: usually returns the winning policy
+            - For other systems: may return vote counts, margins, or
+              other electoral outcome measures
+        """
+        vote_counts = self.tabulate_votes(original_policy, new_policy)
+        return self.evaluation_function(vote_counts)
 
     def tabulate_votes(self, original_policy: Policy, new_policy: Policy):
-        counts = [
-            0,
-            0,
-        ]  # index 0 represents the original_policy count, index 1 the new policy
+        """
+        Count votes for each policy in a binary choice election.
+        
+        This method aggregates individual voter preferences into vote counts
+        for each policy. It handles the core electoral mechanics including
+        utility comparison, vote assignment, and tie-breaking for indifferent
+        voters. The method is designed to be efficient for large electorates.
+        
+        Args:
+            original_policy (Policy): The incumbent or status quo policy.
+            new_policy (Policy): The challenger or proposed policy.
+        
+        Returns:
+            list[int]: Vote counts where:
+                       - index 0: votes for original_policy
+                       - index 1: votes for new_policy
+                       - Total votes may be less than electorate size
+                         if some voters abstain due to indifference
+        """
         votes = self.obtain_individual_votes(original_policy, new_policy)
         counts = [np.sum(votes == 0), np.sum(votes == 1)]
         return counts
@@ -43,42 +174,101 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
     def obtain_individual_votes(
         self, original_policy: Policy, new_policy: Policy
     ) -> np.array:
-        # it could be more performant to take this out of numpy
-        # but numpy should certainly be used for the overriding functions
+        """
+        Calculate individual voter preferences between two policies.
+        
+        This method computes how each individual voter would vote in a
+        binary choice between two policies. It handles utility comparison,
+        vote assignment, and tie-breaking for indifferent voters. The
+        method is designed to be efficient and vectorizable for large
+        electorates.
+        
+        Args:
+            original_policy (Policy): The incumbent or status quo policy.
+            new_policy (Policy): The challenger or proposed policy.
+        
+        Returns:
+            np.array: Array of individual votes where:
+                      - 0: voter prefers original_policy
+                      - 1: voter prefers new_policy
+                      - -1: voter is indifferent (abstains)
+                      - Length equals the number of voters
+        
+        Note:
+            The method could be optimized by moving some operations out of
+            numpy loops, but numpy is used for the overriding functions
+            in derived classes for performance reasons.
+        """
+        # calculate utilities for each voter for each policy
         original_utilities = np.array(
             [voter.get_utility(original_policy) for voter in self.voters]
         )
         new_utilities = np.array(
             [voter.get_utility(new_policy) for voter in self.voters]
         )
+        
+        # initialize votes array with -1 (indifferent/abstain)
         votes = np.full(len(self.voters), -1)
-        votes[original_utilities > new_utilities] = 0
-        votes[original_utilities < new_utilities] = 1
+        
+        # assign votes based on utility comparison
+        votes[original_utilities > new_utilities] = 0  # Prefer original
+        votes[original_utilities < new_utilities] = 1  # Prefer new
+        
+        # handle ties using tiebreak function if provided
         if self.tiebreak_func is not None:
             ties = original_utilities == new_utilities
             votes[ties] = [self.tiebreak_func() for _ in range(np.sum(ties))]
+        
         return votes
 
     def plot_election_2d(
         self, original_policy: Policy, new_policy: Policy, verbose: bool = True
     ):
-        # initialize the figure and axes
+        """
+        Create a 2D visualization of electoral competition between two policies.
+        
+        This method generates a comprehensive visualization showing how voters
+        are distributed in policy space and how they voted in the binary choice
+        between two policies. The plot includes voter positions, policy positions,
+        and color-coding to show voting patterns. This visualization is crucial
+        for understanding spatial voting theory and electoral dynamics.
+        
+        Args:
+            original_policy (Policy): The incumbent or status quo policy.
+                                      Will be plotted in blue.
+            new_policy (Policy): The challenger or proposed policy.
+                                 Will be plotted in red.
+            verbose (bool, optional): Whether to print detailed information
+                                     about the election results in the plot.
+                                     Defaults to True.
+        
+        Returns:
+            None: Creates and displays a matplotlib figure.
+        
+        Note:
+            The plot is designed to show the relationship between policy
+            positions and voter preferences, making it useful for understanding
+            electoral competition and spatial voting theory.
+        """
+        # initialize the figure and axes with appropriate sizing
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
 
-        # some settings
+        # configure policy names and colors for visualization
         original_policy_name = (
             "Original Policy" if original_policy.name is None else original_policy.name
         )
         new_policy_name = (
-            "New Policy" if original_policy.name is None else new_policy.name
+            "New Policy" if new_policy.name is None else new_policy.name
         )
         undecided_name = "Undecided"
+        
+        # define color scheme for different voting groups
         original_color = "blue"
         new_color = "red"
         undecided_color = "yellow"
 
-        # plotting all voters
+        # get individual votes and organize voters by their choice
         votes = self.obtain_individual_votes(original_policy, new_policy)
         voters_by_vote = {"original": [], "new": [], "undecided": []}
         policy_colors = {
@@ -91,6 +281,8 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             "new": new_policy_name,
             "undecided": undecided_name,
         }
+        
+        # categorize voters by their voting choice
         for i, vote in enumerate(votes):
             if vote == 0:
                 voters_by_vote["original"].append(self.voters[i])
@@ -99,6 +291,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             else:
                 voters_by_vote["undecided"].append(self.voters[i])
 
+        # plot voters grouped by their voting preference
         for k in voters_by_vote.keys():
             if voters_by_vote[k]:
                 arr = np.array(
@@ -113,12 +306,15 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
                 curr_name = policy_names[k]
                 voters_plot.set_label(f"{curr_name} Voters")
 
-        # plotting policies and differentiating winner from loser
+        # plot policies and differentiate winner from loser
         winner = self.compare_policies(original_policy, new_policy)
+        # use star (*) for winner, X for loser, with larger size for winner
         original_marker = "*" if winner == 0 else "X"
         original_size = 250 if winner == 0 else 150
         new_marker = "*" if winner == 1 else "X"
         new_size = 250 if winner == 1 else 150
+        
+        # plot original policy with appropriate marker and size
         original_policy_plot = ax.scatter(
             [original_policy.values[0]],
             [original_policy.values[1]],
@@ -128,6 +324,8 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             s=original_size,
         )
         original_policy_plot.set_label(original_policy_name)
+        
+        # plot new policy with appropriate marker and size
         new_policy_plot = ax.scatter(
             [new_policy.values[0]],
             [new_policy.values[1]],
@@ -138,7 +336,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         )
         new_policy_plot.set_label(new_policy_name)
 
-        # title, labels, legend
+        # configure legend with desired order and positioning
         desired_order = [
             original_policy_name,
             new_policy_name,
@@ -160,11 +358,13 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             handles=ordered_handles,
             labels=desired_order,
         )
+        
+        # set title and axis labels
         plt.title(f"{original_policy_name} vs {new_policy_name}: Election Results")
         plt.xlabel(f"Position on {self.issue_1}")
         plt.ylabel(f"Position on {self.issue_2}")
 
-        # details
+        # display detailed election results if verbose mode is enabled
         if verbose:
             winner_text = original_policy_name if winner == 0 else new_policy_name
             vote_totals = self.tabulate_votes(original_policy, new_policy)
@@ -191,6 +391,39 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
         path: list[Policy],
         save_file: str = None,
     ):
+        """
+        Create a static visualization of a McKelvey-Schofield path through policy space.
+        
+        The McKelvey-Schofield Chaos Theorem demonstrates that agenda setters can
+        manipulate outcomes by controlling the sequence of binary choices, even
+        when the final policy would lose in a direct comparison with the original.
+
+        This method generates a comprehensive plot showing how an agenda setter
+        can manipulate electoral outcomes by strategically sequencing binary choices.
+        The visualization displays the path from an original policy to a goal policy,
+        showing intermediate policy positions and the strategic route taken.
+        
+        Args:
+            original_policy (Policy): The starting policy position (incumbent).
+                                      Plotted in blue with an X marker.
+            goal_policy (Policy): The target policy position (desired outcome).
+                                  Plotted in red with a star marker.
+            path (list[Policy]): Sequence of policies representing the strategic
+                                 path from original to goal. Each policy in the
+                                 sequence must be able to defeat the previous one.
+            save_file (str, optional): File path to save the plot. If None,
+                                       the plot is displayed interactively.
+                                       Defaults to None.
+        
+        Returns:
+            None: Creates and displays/saves a matplotlib figure.
+        
+        Note:
+            The path visualization is crucial for understanding how agenda setting
+            can manipulate electoral outcomes through strategic policy sequencing.
+            Green arrows show the direction of policy movement, and intermediate
+            policies are shown as green circles.
+        """
         # plotting the path
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
@@ -200,7 +433,7 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
             "Original Policy" if original_policy.name is None else original_policy.name
         )
         goal_policy_name = (
-            "New Policy" if original_policy.name is None else goal_policy.name
+            "New Policy" if goal_policy.name is None else goal_policy.name
         )
         original_color = "blue"
         goal_color = "red"
@@ -302,15 +535,60 @@ class ElectionDynamicsTwoParty(ElectionDynamics):
 
     def animate_mckelvey_schofield_path(
         self,
-        original_policy,
-        goal_policy,
-        policy_path,
-        max_frames=1000,
-        output_folder="output",
-        filename="output",
-        plot_verbose=True,
-        fps=0.5,
+        original_policy: Policy,
+        goal_policy: Policy,
+        policy_path: list[Policy],
+        max_frames: int = 1000,
+        output_folder: str = "output",
+        filename: str = "output",
+        plot_verbose: bool = True,
+        fps: float = 0.5,
     ):
+        """
+        Create an animated visualization of a McKelvey-Schofield path through policy space.
+        
+        This method generates an MP4 animation showing how an agenda setter
+        manipulates electoral outcomes step-by-step through strategic policy
+        sequencing. Each frame shows a binary choice between consecutive policies
+        in the path, with voters color-coded by their preference and vote counts
+        displayed below the plot.
+        
+        The animation demonstrates the McKelvey-Schofield theorem by showing
+        how each policy in the sequence can defeat the previous one, even when
+        the final goal policy would lose in a direct comparison with the original.
+        
+        Args:
+            original_policy (Policy): The starting policy position (incumbent).
+                                      Plotted in blue with an X marker.
+            goal_policy (Policy): The target policy position (desired outcome).
+                                  Plotted in red with a star marker.
+            policy_path (list[Policy]): Sequence of policies representing the
+                                        strategic path from original to goal.
+                                        Each policy must defeat the previous one.
+            max_frames (int, optional): Maximum number of animation frames to
+                                        generate. Prevents infinite loops.
+                                        Defaults to 1000.
+            output_folder (str, optional): Directory to save the output MP4 file.
+                                           Defaults to "output".
+            filename (str, optional): Base filename for the output MP4 file
+                                      (without extension). Defaults to "output".
+            plot_verbose (bool, optional): Whether to display vote counts and
+                                           explanatory text below the plot.
+                                           Defaults to True.
+            fps (float, optional): Frames per second for the animation.
+                                   Lower values create slower animations
+                                   for easier viewing. Defaults to 0.5.
+        
+        Returns:
+            None: Creates and saves an MP4 animation file.
+        
+        Note:
+            The animation requires FFmpeg to be installed for MP4 output.
+            Each frame shows the electoral competition between consecutive
+            policies, with voters color-coded by their voting preference.
+            The animation automatically stops when the goal is reached or
+            the maximum frames are exceeded.
+        """
         fig = plt.figure()
 
         original_policy_color = "blue"
