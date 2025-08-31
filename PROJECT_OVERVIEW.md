@@ -47,7 +47,7 @@ This repository demonstrates **advanced computational social science** capabilit
 election_dynamics/     # Core simulation engine
 ├── election_dynamics.py         # Abstract base class
 ├── election_dynamics_*.py       # Concrete child classes
-├── electoral_systems.py         # Concrete implementations
+├── electoral_systems.py         # Factory functions for creating electoral systems
 └── electorates.py               # US electorate creation
 
 voters/               # Voter behavior models
