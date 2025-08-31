@@ -23,9 +23,12 @@ This repository demonstrates **advanced computational social science** capabilit
 ## Code Review Highlights
 
 ### Key Files to Review
+
+Most of these do not yet have the level of commenting they need; however, they should still be navigable:
+
 1. **`election_dynamics/election_dynamics_two_party.py`** - Core architecture and design patterns
-2. **`election_dynamics/election_dynamics_two_party_simple_voters.py`** - A deeper dive into the winset boundary generation and pathfinding algorithms
-3. **`scripts/euclidean_electorate.py`** - Complete working example of McKelvey-Schofield Pathfinding and related capabilities
+2. **`election_dynamics/election_dynamics_two_party_simple_voters.py`** - Implementation of the winset boundary generation and McKelvey-Schofield pathfinding algorithms
+3. **`scripts/euclidean_electorate.py`** - Complete working example of McKelvey-Schofield pathfinding and related capabilities
 4. **`election_dynamics/election_dynamics_multi_party.py`** - A deep dive into RCV visualization implementation
 5. **`scripts/us_electorate_scripts/echelon_electorate_multiparty_winmaps.py`** - Concrete working example of RCV genetic search to find optimal new policy
 
