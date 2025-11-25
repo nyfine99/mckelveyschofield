@@ -1,3 +1,16 @@
+"""
+Two-Party Electoral Dynamics with Taxicab Voters Implementation
+
+This module implements a two-party electoral system with taxicab voters specifically.
+Since the utility function of the voters is known, it can be built into the various functions
+of this module for greater efficiency.
+
+Key Features:
+- More efficient implementation of some functions from the parent class, optimized for taxicab voters
+- Winset boundary generation, specific to taxicab voters
+- McKelvey-Schofield path creation
+"""
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 import math
@@ -24,6 +37,12 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         issue_1: str = "Issue 1",
         issue_2: str = "Issue 2",
     ):
+        """
+        Initialize the two-party taxicab voters electoral dynamics system.
+        
+        Note that the voter_arr and calculated_utilities fields are added on top of those provided
+        by the base class. This enables more efficient calculation later on.
+        """
         self.voters = voters
         self.voter_arr = np.array([voter.ideal_policy.values for voter in self.voters])
         self.calculated_utilities = {}
@@ -37,6 +56,24 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
     def obtain_individual_votes(
         self, original_policy: Policy, new_policy: Policy
     ) -> np.array:
+        """
+        Calculate individual voter preferences between two policies.
+        
+        This method computes how each individual voter would vote in a
+        binary choice between two policies. It overrides the version provided
+        by the parent class in favor of increased efficiency.
+        
+        Args:
+            original_policy (Policy): The incumbent or status quo policy.
+            new_policy (Policy): The challenger or proposed policy.
+        
+        Returns:
+            np.array: Array of individual votes where:
+                      - 0: voter prefers original_policy
+                      - 1: voter prefers new_policy
+                      - -1: voter is indifferent (abstains)
+                      - Length equals the number of voters
+        """
         original_utilities = self.get_policy_utilities(original_policy)
         new_utilities = self.get_policy_utilities(new_policy)
         votes = np.full(len(self.voters), -1)
@@ -45,6 +82,16 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         return votes
 
     def get_policy_utilities(self, policy: Policy) -> np.array:
+        """
+        Obtains the utility of the policy to each voter.
+
+        Args:
+            policy (Policy): the policy.
+
+        Returns:
+            np.array: an array where each element indicates the utility of the policy to the
+                corresponding voter.
+        """
         key = policy.id
         if key in self.calculated_utilities:
             utilities = self.calculated_utilities[key]
@@ -56,9 +103,22 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
     def generate_winset_boundary(
         self,
         current_policy: Policy,
-        n_directions=360,
-        n_halving_iterations=12,
+        n_directions: int = 360,
+        n_halving_iterations: int = 12,
     ) -> np.ndarray:
+        """
+        Obtains the boundary of the policies which could beat the current_policy.
+        An approximation of the boundary is obtained via binary searches in the specified number
+        of directions.
+
+        Args:
+            current_policy (Policy): the current policy.
+            n_directions (int): the number of directions in which to search for boundary points.
+            n_halving_iterations (int): the number of iterations of binary search to run.
+        
+        Returns:
+            np.ndarray: a matrix containing the boundary points.
+        """
         voters_policy_values = self.voter_arr
         current_policy_values = current_policy.values  # shape (2,)
         current_policy_voter_dists = np.linalg.norm(
@@ -139,10 +199,20 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
             raise ValueError("The winset boundary could not be found, and the current policy appears optimal!")
         return filtered_boundary_points
 
-    def mckelvey_schofield_greedy_avg_dist(self, current_policy) -> Policy:
+    def mckelvey_schofield_greedy_avg_dist(self, current_policy: Policy) -> Policy:
         """
-        Select the next policy using a greedy algorithm - choose the policy with the highest average distance
-        from all voters which beats the current policy.
+        Select the next policy in the sequence using a greedy algorithm:
+        choose the policy with the highest average distance
+        from all voters which beats the current policy. 
+        This will make it highly likely that, over time, the voters choose policies which are
+        further away from any of their preferences, and thus that the goal policy will be able
+        to win an election.
+
+        Args:
+            current_policy (Policy): the current policy enacted by the voters.
+
+        Returns:
+            Policy: a policy which will beat current_policy in an election.
         """
         boundary_points = self.generate_winset_boundary(current_policy)
         boundary_points_voters_deltas = (
@@ -160,8 +230,25 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         )  # return the policy with the maximum average distance
 
     def mckelvey_schofield_greedy_with_adjustment_avg_dist(
-        self, current_policy, policy_path
+        self, current_policy: Policy, policy_path: list[Policy]
     ) -> Policy:
+        """
+        Select the next policy in the sequence using a mostly greedy algorithm:
+        choose the policy with the highest average distance
+        from all voters which beats the current policy.
+        However, if that policy does not differ sufficiently from the current_policy,
+        we choose a different policy on the winset boundary.
+        
+        This process makes getting stuck at a fixed point/local optimum less likely
+        than the pure greedy algorithm.
+
+        Args:
+            current_policy (Policy): the current policy enacted by the voters.
+            policy_path (list[Policy]): the path of policies that has been taken to reach the current_policy.
+
+        Returns:
+            Policy: a policy which will beat current_policy in an election.
+        """
         boundary_points = self.generate_winset_boundary(current_policy)
         boundary_points_voters_deltas = (
             boundary_points[:, None, :] - self.voter_arr[None, :, :]
@@ -203,7 +290,24 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
             poss_next_policy_values
         )  # return the policy with the maximum average distance or a forced movement policy
 
-    def mckelvey_schofield_greedy_with_lookahead(self, current_policy) -> Policy:
+    def mckelvey_schofield_greedy_with_lookahead(self, current_policy: Policy) -> Policy:
+        """
+        Select the next policy using a greedy algorithm with a lookahead:
+        - Choose the policy on the winset boundary with the maximum average distance from
+            all voters.
+        - Choose several other policies on the winset boundary at random.
+        - From this set, choose whichever policy has the policy with the maximum average 
+            distance from all voters on its winset boundary.
+
+        This process makes getting stuck at a fixed point/local optimum less likely
+        than the pure greedy algorithm.
+
+        Args:
+            current_policy (Policy): the current policy enacted by the voters.
+
+        Returns:
+            Policy: a policy which will beat current_policy in an election.
+        """
         boundary_points = self.generate_winset_boundary(current_policy)
         boundary_points_voters_deltas = (
             boundary_points[:, None, :] - self.voter_arr[None, :, :]
@@ -218,9 +322,9 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         curr_max = boundary_points[arg_max]
 
         # performing lookahead
-        n_random_points_to_choose = 3
-        lookahead_directions = 60
-        lookahead_halving_iterations = 12  # should probably be the value used in first generate_winset_boundary call
+        n_random_points_to_choose = 3  # TODO: make mutable from outside of the function
+        lookahead_directions = 60  # TODO: make mutable from outside of the function
+        lookahead_halving_iterations = 12  # TODO: should probably be the value used in first generate_winset_boundary call
         random_indices = np.random.choice(
             boundary_points.shape[0], size=n_random_points_to_choose, replace=False
         )
@@ -260,6 +364,20 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         step_selection_function="mckelvey_schofield_greedy_with_lookahead",
         print_verbose=False,
     ) -> list[Policy]:
+        """
+        Obtains the McKelvey-Schofield path from the original_policy to the goal_policy.
+
+        Args:
+            original_policy (Policy): the original policy.
+            goal_policy (Policy): the goal policy.
+            max_steps (int): the maximum number of steps for which to run the algorithm.
+            step_selection_function (str): the function to use at each step to select the next policy.
+            print_verbose (bool): whether to provide the user with updates as the path is obtained.
+
+        Returns:
+            list[Policy]: a list of policies starting with the original_policy and ending with the
+                goal_policy (if possible) such that policy i+1 will defeat policy i in an election.
+        """
         
         policy_path = [original_policy]  # Initialize the path with the original policy
 
@@ -272,6 +390,7 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
                 new_policy = goal_policy
             else:
                 try:
+                    # TODO: make plugging in the function cleaner
                     if (
                         step_selection_function
                         == "mckelvey_schofield_greedy_with_adjustment_avg_dist"
@@ -324,6 +443,16 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         output_folder="output",
         filename="output",
     ):
+        """
+        Given a McKelvey-Schofield path, plots the average distance of each policy from the voters.
+        The plot is output to the specified location.
+
+        Args:
+            path (list[Policy]): a McKelvey-Schofield path.
+            max_steps (int): the max_steps parameter used in calculating that path.
+            output_folder (str): the output folder.
+            filename (str): the output file name to use (should end in .png).
+        """
         # plot settings
         fig = plt.figure(figsize=(12, 8))
 
@@ -356,8 +485,17 @@ class ElectionDynamicsTwoPartyTaxicabVoters(ElectionDynamicsTwoParty):
         plt.close(fig)
 
     def plot_winset_boundary(
-        self, current_policy, n_directions=360, n_halving_iterations=12
+        self, current_policy: Policy, n_directions: int=360, n_halving_iterations: int=12
     ):
+        """
+        Plots (approximately) the set of policies capable of beating the current_policy.
+        The plot is visualized.
+
+        Args:
+            current_policy (Policy): the current policy.
+            n_directions (int): the number of directions in which to search for boundary points.
+            n_halving_iterations (int): the number of iterations of binary search to run.
+        """
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_axes([0.1, 0.3, 0.55, 0.55])  # Shrink plot inside the figure
 

@@ -8,16 +8,8 @@ concrete implementations of vote tabulation, policy comparison, and electoral an
 
 Key Features:
 - Binary choice electoral system (two policies compete)
-- Individual voter preference calculation and aggregation
-- Tie-handling mechanism for indifferent voters
-- 2D policy space visualization and analysis
-- Efficient vote counting and utility computation
-
-This class demonstrates fundamental electoral dynamics concepts including:
-- How individual voter utilities translate to aggregate electoral outcomes
-- The relationship between policy positions and voter preferences
-- Visualization of electoral competition in policy space
-- Handling of edge cases like voter indifference
+- Individual voter preference calculation, aggregation, and visualization
+- McKelvey-Schofield path visualization
 
 The implementation serves as the base class for more specialized two-party systems
 (e.g., SimpleVoter-specific implementations) while providing the core electoral logic.
