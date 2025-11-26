@@ -1,3 +1,10 @@
+"""
+Electorates Factory Module
+
+This module provides factory functions for creating electorates modeled off of real-world data.
+Specifically, the sample data from Echelon Insights.
+"""
+
 import pandas as pd
 import numpy as np
 
