@@ -73,8 +73,8 @@ See `docs/gallery` for examples of each of the plots and animations described be
 ### Ranked-Choice Voting Outputs
 - [**Round-by-round animation**](docs/gallery/echelon_electorate_big_rcv_animation.mp4): Animates RCV elimination process
 - [**Sankey diagram**](docs/gallery/echelon_electorate_rcv_sankey.png): Visualizes vote flow between candidates
-- [**New Policy Winmap**](docs/gallery/echelon_electorate_rcv_winmap.png): Visualizes the electoral outcome of inserting a new policy into the election at any given point
-- [**Optimal Policy Genetic Search Animation**](docs/gallery/echelon_electorate_rcv_genetic_search.mp4): Animates the process of a genetic algorithm finding an optimal policy to insert into a multi-way election
+- [**New policy winmap**](docs/gallery/echelon_electorate_rcv_winmap.png): Visualizes the electoral outcome of inserting a new policy into the election at any given point
+- [**Optimal policy genetic search animation**](docs/gallery/echelon_electorate_rcv_genetic_search.mp4): Animates the process of a genetic algorithm finding an optimal policy to insert into a multi-way election
 
 ### New Candidate 
 
