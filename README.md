@@ -1,10 +1,10 @@
 # McKelvey-Schofield Chaos Theorem & Other Electoral Dynamics Simulation
 
-![McKelvey-Schofield Path](docs/gallery/euclidean_electorate_path.png)
-
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)]()
+
+![McKelvey-Schofield Path](docs/gallery/euclidean_electorate_path.png)
 
 ## Project Overview
 
@@ -110,8 +110,8 @@ mckelveyschofield/
 ### Winset Visualization
 ![Policy Space](docs/gallery/euclidean_electorate_centrism_winset_boundary.png)
 
-### McKelvey-Schofield Path Animation
-![McKelvey-Schofield Path Animation](docs/gallery/euclidean_electorate_animation.mp4)
+### McKelvey-Schofield Path Visualization
+![McKelvey-Schofield Path](docs/gallery/euclidean_electorate_path.png)
 
 ### Ranked Choice Voting Flow
 ![RCV Sankey](docs/gallery/echelon_electorate_rcv_sankey.png)
