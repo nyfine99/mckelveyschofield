@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)]()
+[![Status](https://img.shields.io/badge/Status-Paused-lightgrey.svg)]()
 
 ![McKelvey-Schofield Path](docs/gallery/euclidean_electorate_path.png)
 
