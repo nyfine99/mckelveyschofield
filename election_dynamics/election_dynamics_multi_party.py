@@ -1,3 +1,18 @@
+"""
+Multi-arty Electoral Dynamics Implementation
+
+This module implements the core multiparty electoral system, serving as the foundation
+for electoral simulations where voters choose between exactly multiple policy alternatives.
+The ElectionDynamicsMultiParty class extends the abstract base class to provide
+concrete implementations of vote tabulation, policy comparison, and electoral analysis.
+
+Key Features:
+- Multi-party electoral systems implementation: first-past-the-post and ranked choice voting
+- Ranked choice voting election visualization via Sankey diagram and animation
+- Functionality to visualize and determine viable and optimal new candidates in multi-way elections
+
+"""
+
 from collections import Counter
 import copy
 import random
@@ -21,6 +36,32 @@ from utility_functions.genetic_performance_functions import mov_final_round
 COLORS_FOR_PLOTTING = ['blue', 'red', 'orange', 'green', 'purple', 'yellow', 'brown', 'pink', 'gray']
 
 class ElectionDynamicsMultiParty(ElectionDynamics):
+    """
+    Concrete implementation of multi-party electoral dynamics.
+    
+    This class implements the core electoral logic for multiple choice elections,
+    where voters must choose between several policy alternatives.
+    
+    The class handles:
+    - Individual vote ranking based on utility comparisons
+    - Aggregate vote counting and electoral outcome determination
+    - Tie-breaking for indifferent voters
+    - Policy space visualization and analysis
+    - Efficient utility computation
+    
+    Attributes:
+        voters (list[Voter]): collection of voter objects representing the electorate.
+                            each voter must implement the voter interface with
+                            get_utility() method.
+        evaluation_function (callable): function that determines electoral outcomes
+                                    from vote counts. Typically returns the
+                                    winning policy based on vote totals.
+        tiebreak_func (callable, optional): function to handle voter indifference.
+                                            Called when a voter's utilities for
+                                            both policies are equal. Defaults to None.
+        issue_1 (str): Label for the first policy dimension (e.g., "Economic Policy").
+        issue_2 (str): Label for the second policy dimension (e.g., "Social Policy").
+    """
     def __init__(
         self,
         voters: list[Voter],
@@ -29,6 +70,33 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         issue_1: str = "Issue 1",
         issue_2: str = "Issue 2",
     ):
+        """
+        Initialize the multi-party electoral dynamics system.
+        
+        Creates a new electoral system configured for multiple choice elections.
+        The system is designed to handle any voter type that implements the
+        Voter interface, making it flexible for different preference models.
+        
+        Args:
+            voters (list[Voter]): List of voter objects. Each voter must have
+                                  a get_utility(policy) method that returns a
+                                  numeric utility value for any given policy.
+            evaluation_function (callable): Function that determines electoral
+                                           outcomes from vote counts. Should
+                                           accept a matrix of vote counts and
+                                           return the winning policy or result.
+            tiebreak_func (callable, optional): Function to resolve voter
+                                               indifference. Called when a
+                                               voter's utilities for both
+                                               policies are equal. If None,
+                                               indifferent voters abstain.
+            issue_1 (str, optional): Human-readable label for the first
+                                     policy dimension. Used for plot labels
+                                     and documentation. Defaults to "Issue 1".
+            issue_2 (str, optional): Human-readable label for the second
+                                     policy dimension. Used for plot labels
+                                     and documentation. Defaults to "Issue 2".
+        """
         self.voters = voters
         self.evaluation_function = evaluation_function
         self.tiebreak_func = (
@@ -39,11 +107,14 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
 
     def compare_policies(self, policies: list[Policy]) -> int:
         """
-        Compares policies using the evaluation function. Takes a list of Policy objects, tabulates votes (returns ndarray), and passes to evaluation function.
-        Params:
-            policies (list[Policy]): List of Policy objects.
+        Compares policies using the evaluation function. 
+        Takes a list of Policy objects, tabulates votes (returns ndarray), and passes to evaluation function.
+
+        Args:
+            policies (list[Policy]): a list of Policy objects.
+        
         Returns:
-            int: Index of winning policy
+            int: the index of the winning policy.
         """
         preferences = self.tabulate_votes(policies)
         return self.evaluation_function(preferences)
@@ -52,8 +123,10 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         """
         Returns a 2D np.ndarray where each row represents an individual voter's preferences (policy indices, ranked best to worst).
         For example, array([[1,2,3], [2,1,3]]) means voter 0 prefers 1>2>3, voter 1 prefers 2>1>3.
-        Params:
-            policies (list[Policy]): List of Policy objects.
+
+        Args:
+            policies (list[Policy]): a list of Policy objects.
+        
         Returns:
             np.ndarray: shape (num_voters, num_policies)
         """
@@ -62,6 +135,13 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
     def plot_voters_first_choices(
         self, policies: list[Policy], verbose: bool = True
     ):
+        """
+        Shows a 2d plot of the voters' first choices.
+
+        Args:
+            policies (list[Policy]): the competing policies.
+            verbose (bool): whether to include a description of the plot on the plot.
+        """
         # initialize the figure and axes
         if len(policies) < 1:
             print("Not enough policies to hold an election!")
@@ -175,11 +255,24 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         self, 
         policies: list[Policy],
         stop_at_majority: bool = True,
-        output_folder="output",
-        filename="rcv_election_animation",
-        plot_verbose=True,
-        fps=0.5,
+        output_folder: str = "output",
+        filename: str = "rcv_election_animation",
+        plot_verbose: bool = True,
+        fps: float = 0.5,
     ):
+        """
+        Creates a step-by-step animation of an election between policies as each worst-performing policy
+        is eliminated. If stop-at-majority is true, the animation stops as soon as one candidate has a majority.
+        The animation is saved to the location specified.
+
+        Args:
+            policies (list[Policy]): the policies competing in the election.
+            stop_at_majority (bool): whether to stop animating after one candidate achieves a majority.
+            output_folder (str): the folder in which to place the animation.
+            filename (str): the name of the output file; should not contain a suffix.
+            plot_verbose (bool): whether to include a description of each frame in the corner of the animation.
+            fps (float): the frames per second rate to use in the animation.
+        """
         # setup
         if self.evaluation_function != ranked_choice_preference:
             print("Warning: election animation is only supported for RCV elections.")
@@ -410,16 +503,23 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         self, 
         policies: list[Policy], 
         stop_at_majority: bool = True,
-        output_folder="output",
-        filename=None
+        output_folder: str = "output",
+        filename: str = "rcv_sankey_diagram",
     ):
         """
         Creates a round-by-round alluvial (Sankey-like) diagram using matplotlib, showing how votes are 
-        redistributed as candidates are eliminated. 
+        redistributed as candidates are eliminated. The diagram is output to the location specified.
+
         Each round is a vertical column (labeled at the top), each candidate is a horizontal row,
         each node is labeled as policy_name and sized by vote count, and flows are drawn between nodes
         in adjacent rounds.
         Note: the sankey library is not used here, as its capabilities do not allow for the desired visualization.
+
+        Args:
+            policies (list[Policy]): the policies competing in the election.
+            stop_at_majority (bool): whether to stop the election after one candidate achieves a majority.
+            output_folder (str): the folder in which to place the animation.
+            filename (str): the name of the output file; should not contain a suffix.
         """
         if self.evaluation_function != ranked_choice_preference:
             print("Warning: election sankey diagram creation is only supported for RCV elections.")
@@ -556,8 +656,8 @@ class ElectionDynamicsMultiParty(ElectionDynamics):
         and records which policy would win. Plots a soft/decayed heatmap showing the winner at each gridpoint.
         Voters are plotted as black dots.
 
-        Params:
-            policies (list[Policy]): List of existing Policy objects
+        Args:
+            policies (list[Policy]): a list of existing Policy objects
             new_policy_name (str): name of the new policy to compete with the existing policies
             x_min, x_max, y_min, y_max (float): bounds of the grid
             x_step, y_step (float): step size for the grid

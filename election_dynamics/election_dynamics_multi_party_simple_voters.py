@@ -1,3 +1,12 @@
+"""
+Multi-party Electoral Dynamics with Simple Voters Implementation
+
+This module defines the ElectionDynamicsMultiPartySimpleVoters, building slightly off of
+ElectionDynamicsMultiParty. Specifically, the tabulate_votes function is overridden with a
+more efficient version.
+"""
+
+
 import numpy as np
 from typing import Callable
 
@@ -27,8 +36,10 @@ class ElectionDynamicsMultiPartySimpleVoters(ElectionDynamicsMultiParty):
         Computes ranked preferences for each voter by distance to policy (closer = higher utility).
         Ties are broken by the index of the policy (lower index = higher utility).
         Returns a 2D np.ndarray where each row is a voter's ranked policy indices (best to worst).
-        Params:
+
+        Args:
             policies (list[Policy]): List of Policy objects.
+        
         Returns:
             np.ndarray: shape (num_voters, num_policies)
         """
