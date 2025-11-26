@@ -1,5 +1,5 @@
 """
-Two-Party Electoral Dynamics with Simple Voters Implementation
+Two-party Electoral Dynamics with Simple Voters Implementation
 
 This module implements a two-party electoral system with simple (Euclidean) voters specifically.
 Since the utility function of the voters is known, it can be built into the various functions

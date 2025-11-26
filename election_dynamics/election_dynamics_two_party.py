@@ -1,5 +1,5 @@
 """
-Two-Party Electoral Dynamics Implementation
+Two-party Electoral Dynamics Implementation
 
 This module implements the core two-party electoral system, serving as the foundation
 for electoral simulations where voters choose between exactly two policy alternatives.
