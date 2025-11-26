@@ -1,5 +1,7 @@
 # McKelvey-Schofield Chaos Theorem & Other Electoral Dynamics Simulation
 
+![McKelvey-Schofield Path](docs/gallery/euclidean_electorate_path.png)
+
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)]()
@@ -86,7 +88,6 @@ mckelveyschofield/
 - **Genetic algorithm optimization** to obtain highest-performing newcomer electoral strategy
 - **Lookahead pathfinding** with configurable horizons
 - **Efficient winset boundary computation** using an adapted binary search
-- **Multi-dimensional policy space analysis**
 
 ### Performance Features
 - **Vectorized computations** using NumPy
@@ -102,15 +103,15 @@ mckelveyschofield/
 
 - **[McKelvey-Schofield Guide](docs/mckelvey_schofield.md)** - deep dive into the theorem and implementations
 - **[Ranked-Choice Voting](docs/ranked_choice_voting.md)** - RCV simulation capabilities
-- **[Gallery](docs/gallery/)** - Visual examples and outputs
+- **[Gallery](docs/gallery/)** - visual examples and outputs
 
 ## Example Outputs
 
 ### Winset Visualization
 ![Policy Space](docs/gallery/euclidean_electorate_centrism_winset_boundary.png)
 
-### McKelvey-Schofield Path
-![Strategic Path](docs/gallery/euclidean_electorate_path.png)
+### McKelvey-Schofield Path Animation
+![McKelvey-Schofield Path Animation](docs/gallery/euclidean_electorate_animation.mp4)
 
 ### Ranked Choice Voting Flow
 ![RCV Sankey](docs/gallery/echelon_electorate_rcv_sankey.png)
