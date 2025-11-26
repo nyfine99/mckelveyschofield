@@ -75,7 +75,7 @@ mckelveyschofield/
 ├── policies/             # Policy representation
 ├── scripts/              # Ready-to-run examples
 ├── utility_functions/    # Mathematical and evaluation tools
-├── docs/                 # Detailed documentation
+├── docs/                 # Detailed documentation and sample outputs
 ├── data/                 # Sample datasets
 └── output/               # Generated visualizations
 ```
