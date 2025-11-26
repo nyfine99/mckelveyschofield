@@ -46,31 +46,37 @@ python -m scripts.small_rcv_electorate
 
 ### New Policy Entry Optimization
 ```bash
-python -m scripts.us_electorate_scripts.echelon_electorate_rcv
+python -m scripts.us_electorate_scripts.echelon_electorate_multiparty_winmaps
 ```
 
 ## Understanding the Outputs
 
-### Winset Boundary Plot
+See `docs/gallery` for examples of each of the plots and animations described below.
+
+### [Winset Boundary Plot](docs/gallery/euclidean_electorate_centrism_winset_boundary.png)
 - **Black dots**: Individual voters
 - **Orange Circle**: Incumbent policies
 - **Shaded region**: The set of policies that can defeat the incumbent
 
-### McKelvey-Schofield Path Plot
+### [McKelvey-Schofield Path Plot](docs/gallery/euclidean_electorate_path.png)
 - **Black dots**: Individual voters
 - **Blue X**: Initial policy
 - **Red star**: Goal policy
 - **Green dots/arrows**: Strategic policy transitions for agenda setters to manipulate outcomes
 
-### McKelvey-Schofield Path Animation
+### [McKelvey-Schofield Path Animation](docs/gallery/euclidean_electorate_animation.mp4)
 - **Small dots**: Individual voters, colored by choice
 - **Large dots**: Current policy options for voters
 - **Blue X**: Initial policy
 - **Red star**: Goal policy
 
 ### Ranked-Choice Voting Outputs
-- **Round-by-round animation**: Animates elimination process
-- **Sankey diagram**: Visualizes vote flow between candidates
+- [**Round-by-round animation**](docs/gallery/echelon_electorate_big_rcv_animation.mp4): Animates RCV elimination process
+- [**Sankey diagram**](docs/gallery/echelon_electorate_rcv_sankey.png): Visualizes vote flow between candidates
+- [**New Policy Winmap**](docs/gallery/echelon_electorate_rcv_winmap.png): Visualizes the electoral outcome of inserting a new policy into the election at any given point
+- [**Optimal Policy Genetic Search Animation**](docs/gallery/echelon_electorate_rcv_genetic_search.mp4): Animates the process of a genetic algorithm finding an optimal policy to insert into a multi-way election
+
+### New Candidate 
 
 ## Customization
 
