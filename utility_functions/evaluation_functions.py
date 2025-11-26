@@ -32,7 +32,10 @@ def first_past_the_post(
     Params:
         preferences (np.ndarray): the voters' relative policy preferences; 
             preferences[i] is a list representing where the first element is voter i's most prefered policy, and so on
-
+        stop_at_majority (bool): If True, the function will return the index of the winning policy once more 
+            than half of the votes have been counted.
+        output_vote_counts (bool): If True, return a 2D np.ndarray with vote counts for each policy by round.
+            
     Returns:
         int: the index of winning policy
     """
