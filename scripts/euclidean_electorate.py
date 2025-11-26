@@ -104,6 +104,20 @@ def main():
     
     if path:
         print(f"Found path with {len(path)} steps.")
+
+        # create static plot of the path
+        # this shows the strategic route through policy space
+        print("\nCreating static path plot...")
+        s_time = datetime.now()
+        electorate.plot_mckelvey_schofield_path(
+            p1, p2, path, 
+            save_file="output/euclidean_electorate_path.png"
+        )
+        e_time = datetime.now()
+        print(f"Path plot completed in {e_time - s_time} seconds.")
+        
+        print("\nSimulation completed successfully!")
+        print("Check the 'output' folder for generated visualizations.")
         
         # create animation showing the path through policy space
         # this visualizes how the agenda setter moves through the space
@@ -118,20 +132,6 @@ def main():
         )
         e_time = datetime.now()
         print(f"Path animation completed in {e_time - s_time} seconds.")
-        
-        # create static plot of the path
-        # this shows the strategic route through policy space
-        print("\nCreating static path plot...")
-        s_time = datetime.now()
-        electorate.plot_mckelvey_schofield_path(
-            p1, p2, path, 
-            save_file="output/euclidean_electorate_path.png"
-        )
-        e_time = datetime.now()
-        print(f"Path plot completed in {e_time - s_time} seconds.")
-        
-        print("\nSimulation completed successfully!")
-        print("Check the 'output' folder for generated visualizations.")
         
     else:
         print("No path found - this can happen with certain voter distributions")
