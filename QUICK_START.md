@@ -119,6 +119,11 @@ electorate.plot_winset_boundary(
 - **Mac**: `brew install ffmpeg`
 - **Linux**: `sudo apt install ffmpeg`
 
+**"Output folder not found"**
+```bash
+mkdir output
+```
+
 ### Performance Tips
 
 - **Small electorates** (< 1000 voters) run quickly
