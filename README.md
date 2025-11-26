@@ -6,11 +6,13 @@
 
 ## Project Overview
 
-This repository demonstrates advanced electoral dynamics through computational simulations of the **McKelvey-Schofield Chaos Theorem** and **Ranked-choice Voting system**. The project showcases implementation of mathematical theory, data visualization, and algorithmic implementations in political science.
+This repository demonstrates advanced electoral dynamics through computational simulations of the **McKelvey-Schofield Chaos Theorem** and **Ranked-choice Voting system**. The project showcases implementation of mathematical theory, data visualization, and complex algorithms in political science.
 
 ### What is the McKelvey-Schofield Chaos Theorem?
 
 The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2%80%93Schofield_chaos_theorem) proves that in multidimensional policy spaces, an agenda setter can (under fairly general conditions on voter preferences) manipulate voters to choose any policy over any other through strategic sequencing of binary choices. This project provides interactive visualizations and computational tools to explore this fascinating result.
+
+More information on the McKelvey-Schofield Chaos Theorem (and ranked-choice voting) can be found in the `docs` subfolder.
 
 ## Key Features
 
@@ -22,17 +24,19 @@ The [McKelvey-Schofield Chaos Theorem](https://en.wikipedia.org/wiki/McKelvey%E2
 
 ### Implementation of Mathematical Theory
 - **Voter choice** in 2D Euclidean and Manhattan geometries
-- **Winset computation** - finding the set of policies that can defeat incumbents
+- **Winset computation** - finding the set of policies that can defeat a given incumbent
 - **McKelvey-Schofield pathfinding** - strategic policy transition sequences for the agenda setter
 - **Electoral strategy optimization** in a ranked-choice voting system
 
 ### Advanced Visualizations
 - **Round-by-round animations** of individual voter distribution in ranked-choice elections
 - **Sankey diagrams** for ranked-choice voting flows
-- **Policy space heatmaps** to show the ability of newcomer policies to defeat incumbents
+- **Policy space heatmaps** to show the expected effects of introducing new policies
 - **Path trajectory plots and animations** showing strategic policy transitions for an agenda setter
 
 ## Quick Start
+
+See `QUICK_START.md` for more thorough directions.
 
 ### Prerequisites
 - Python 3.8+
@@ -109,7 +113,10 @@ mckelveyschofield/
 ![Strategic Path](docs/gallery/euclidean_electorate_path.png)
 
 ### Ranked Choice Voting Flow
-![RCV Sankey](rcv_sankey.png)
+![RCV Sankey](docs/gallery/echelon_electorate_rcv_sankey.png)
+
+### New Policy Ranked Choice Voting Effects
+![RCV New Policy Effects](docs/gallery/echelon_electorate_rcv_winmap.png)
 
 ## Development
 
@@ -121,44 +128,17 @@ python -m scripts.small_rcv_electorate
 ```
 
 ### Contributing
-Contributions are welcome! This project demonstrates:
-- **Mathematical simulation** and algorithm implementation
-- **Data visualization** and interactive graphics
-- **Political science** and social choice theory
-- **Python development** with scientific computing
+Contributions are welcome!
 
 ## Ideas for Future Development
 
-- McKelvey-Schofield 
-pathfinding capabilities 
-for voters with any 
-weighted L1 or L2 norm 
-utility functions
+- McKelvey-Schofield pathfinding capabilities for voters with any weighted L1 or L2 norm utility functions
 - Increased performance optimization for large-scale electorates
-- (Documentation) A justification as to 
-the validity of the winset 
-boundary algorithm
-- Exploration and possible 
-implementation of 
-non-greedy 
-McKelvey-Schofield 
-pathfinding
-- Exploration of 
-ranked-choice voting with 
-limits on how many 
-policies voters can put on 
-their ballots, and finding 
-the optimal location to 
-insert a new policy
+- (Documentation) A justification as to the validity of the winset boundary algorithm
+- Exploration and possible implementation of non-greedy McKelvey-Schofield pathfinding
+- Exploration of ranked-choice voting with limits on how many policies voters can put on their ballots, and finding the optimal location to insert a new policy
 
 ## Contact & Collaboration
-
-This project demonstrates understanding of:
-- **Computational social science**
-- **Mathematical simulation**
-- **Data visualization**
-- **Algorithm design**
-- **Python development**
 
 Feel free to reach out for collaboration opportunities or questions about the implementation!
 
