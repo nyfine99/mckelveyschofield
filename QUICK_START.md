@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get this project running in under 5 minutes to see the electoral dynamics in action!
+Get this project running in just a few minutes, and see the electoral dynamics in action!
 
 ## Quick Start
 
@@ -16,12 +16,16 @@ pip install -r requirements.txt
 python -m scripts.euclidean_electorate
 ```
 
+Note: to create any animations, you will need to install ffmpeg on your system. The link to do so can be found [here](https://ffmpeg.org/download.html).
+
 ## What You'll See
 
 Running the demo will generate:
 - **Winset boundary** - policies that can defeat the incumbent
 - **McKelvey-Schofield path** - strategic policy transition sequence
 - **Animation** showing the path through policy space
+
+These can all be found in the newly-created output folder.
 
 ## Explore Different Scenarios
 
@@ -109,11 +113,6 @@ electorate.plot_winset_boundary(
 - **Mac**: `brew install ffmpeg`
 - **Linux**: `sudo apt install ffmpeg`
 
-**"Output folder not found"**
-```bash
-mkdir output
-```
-
 ### Performance Tips
 
 - **Small electorates** (< 1000 voters) run quickly
@@ -125,14 +124,6 @@ mkdir output
 1. **Read the docs**: Check `docs/mckelvey_schofield.md` and `docs/ranked_choice_voting.md` for a more detailed dive into the capabilities offered in each regard
 2. **Explore scripts**: Try different parameter combinations
 3. **Modify code**: Add new voter types or electoral systems
-
-## Success!
-
-You've successfully run a computational social science simulation! This demonstrates:
-- **Mathematical modeling** capabilities
-- **Data visualization** skills
-- **Algorithm implementation** expertise
-- **Research software** development
 
 ---
 
